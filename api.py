@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from crewai import Agent, Task, Crew, Process, LLM
 import os
 from dotenv import load_dotenv
@@ -12,8 +12,11 @@ app = FastAPI()
 load_dotenv()
 
 # Pydantic model to receive the payload
-class Payload(BaseModel):
-    payload: str
+class Evento(BaseModel):
+    evento: str
+
+class ItemResponse(BaseModel):
+    """Arquivo Feature"""
 
 # Define LLM models for low and high temperature
 llm_low_temp = LLM(
@@ -129,11 +132,19 @@ def generate_gherkin_feature(json_payload):
 async def home():
     return "Rodando"
 
-@app.post("/gherkin")
-async def generate_gherkin_file(payload: Payload):
+@app.post("/gherkin", responses={
+    200: {
+        "content": {
+            "text/plain": {
+                "example": "Feature File"
+            }
+            }
+        }
+    })
+async def generate_gherkin_file(evento: Evento):
     try:
-        # Call the function to process the payload and generate the feature file
-        feature_file = generate_gherkin_feature(payload.payload)
+        # Call the function to process the evento and generate the feature file
+        feature_file = generate_gherkin_feature(evento.evento)
         return FileResponse(path=feature_file, media_type='text/plain', filename=feature_file.split('/')[-1])
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
