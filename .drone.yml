@@ -7,3 +7,13 @@ steps:
     image: docker:latest
     commands:
       - docker build .
+
+trigger:
+  branch:
+    - main
+    - master
+
+services:
+  - name: docker
+    image: docker:19.03.12-dind
+    privileged: true
