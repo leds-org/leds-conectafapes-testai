@@ -16,11 +16,11 @@ You can send a request to the API to generate a BDD scenario in Gherkin format. 
 #### Example Request
 
 ```bash
-POST http://localhost:8000/generate-feature
+POST http://localhost:8000/gherkin
 Content-Type: application/json
 
 {
-  "scenario": "Your scenario description"
+  "evento": "Your scenario description"
 }
 ```
 

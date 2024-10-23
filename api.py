@@ -15,9 +15,6 @@ load_dotenv()
 class Evento(BaseModel):
     evento: str
 
-class ItemResponse(BaseModel):
-    """Arquivo Feature"""
-
 # Define LLM models for low and high temperature
 llm_low_temp = LLM(
     model='gemini/gemini-1.5-flash',
