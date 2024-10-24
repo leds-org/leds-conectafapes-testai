@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from crewai import Agent, Task, Crew, Process, LLM
 import os
@@ -8,6 +9,19 @@ from fastapi.responses import FileResponse
 import uuid
 
 app = FastAPI()
+
+options = [
+    'http:localhost',
+    "http://127.0.0.1:5500"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=options,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
 load_dotenv()
 
@@ -32,7 +46,7 @@ llm_high_temp = LLM(
 def generate_gherkin_feature(json_payload):
     tasks = []
     agents = []
-    for i in range(1, 6, 2):
+    for i in range(1, 4):
         gherkin_writer_agent = Agent(
             role=f"Escritor de cenários Gherkin {i}",
             goal="Criar cenários Gherkin compreensivos, claros e concisos para descrever o comportomaneto do sistema",
@@ -133,7 +147,18 @@ async def home():
     200: {
         "content": {
             "text/plain": {
-                "example": "Feature File"
+                "example": """Feature: Excluir Resolução
+
+Scenario Outline: Nome Scenario
+    Given exemplo de given
+    When exemplo de when
+    Then exemplo de then
+
+    Examples:
+    | exemplos |
+    | exemplo1 |
+
+                """
             }
             }
         }
