@@ -1,10 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from crewai import Agent, Task, Crew, Process, LLM
 import os
 from dotenv import load_dotenv
-from fastapi.responses import FileResponse
+from fastapi.responses import JSONResponse
 
 import uuid
 
@@ -168,6 +168,6 @@ async def generate_gherkin_file(evento: Evento):
         # Call the function to process the evento and generate the feature file
         feature_file = generate_gherkin_feature(evento.evento)
         # return FileResponse(path=feature_file, media_type='text/plain', filename=feature_file.split('/')[-1])
-        return {"feature": feature_file}
+        return JSONResponse({"feature": feature_file})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
