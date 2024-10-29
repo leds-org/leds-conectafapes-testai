@@ -1,13 +1,27 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from crewai import Agent, Task, Crew, Process, LLM
 import os
 from dotenv import load_dotenv
-from fastapi.responses import FileResponse
+from fastapi.responses import JSONResponse
 
 import uuid
 
 app = FastAPI()
+
+# options = [
+#     'http:localhost',
+#     "http://127.0.0.1:5500"
+# ]
+
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=options,
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"]
+# )
 
 load_dotenv()
 
@@ -32,7 +46,7 @@ llm_high_temp = LLM(
 def generate_gherkin_feature(json_payload):
     tasks = []
     agents = []
-    for i in range(1, 6, 2):
+    for i in range(1, 4):
         gherkin_writer_agent = Agent(
             role=f"Escritor de cenários Gherkin {i}",
             goal="Criar cenários Gherkin compreensivos, claros e concisos para descrever o comportomaneto do sistema",
@@ -121,8 +135,8 @@ def generate_gherkin_feature(json_payload):
         verbose=True
     )
 
-    crew.kickoff()
-    return file_name
+    resultado = crew.kickoff()
+    return resultado.raw
 
 
 @app.get("/")
@@ -133,7 +147,18 @@ async def home():
     200: {
         "content": {
             "text/plain": {
-                "example": "Feature File"
+                "example": """Feature: Excluir Resolução
+
+Scenario Outline: Nome Scenario
+    Given exemplo de given
+    When exemplo de when
+    Then exemplo de then
+
+    Examples:
+    | exemplos |
+    | exemplo1 |
+
+                """
             }
             }
         }
@@ -142,6 +167,7 @@ async def generate_gherkin_file(evento: Evento):
     try:
         # Call the function to process the evento and generate the feature file
         feature_file = generate_gherkin_feature(evento.evento)
-        return FileResponse(path=feature_file, media_type='text/plain', filename=feature_file.split('/')[-1])
+        # return FileResponse(path=feature_file, media_type='text/plain', filename=feature_file.split('/')[-1])
+        return JSONResponse({"feature": feature_file})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
