@@ -135,8 +135,8 @@ def generate_gherkin_feature(json_payload):
         verbose=True
     )
 
-    crew.kickoff()
-    return file_name
+    resultado = crew.kickoff()
+    return resultado.raw
 
 
 @app.get("/")
@@ -167,6 +167,7 @@ async def generate_gherkin_file(evento: Evento):
     try:
         # Call the function to process the evento and generate the feature file
         feature_file = generate_gherkin_feature(evento.evento)
-        return FileResponse(path=feature_file, media_type='text/plain', filename=feature_file.split('/')[-1])
+        # return FileResponse(path=feature_file, media_type='text/plain', filename=feature_file.split('/')[-1])
+        return {"feature": feature_file}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
