@@ -72,6 +72,8 @@ def generate_gherkin_feature(json_payload):
             description=f"""
             Transforme o seguinte caso de uso em arquivos BDD com cenários outlines para casos de sucesso e erro.
             Para cada atributo gerar uma mensagem de erro personalizada quando ela não for informada:
+            Foque em generalizar os casos (Scenarios Outline) cobrindo mais possibilidades com os examples
+            Caso exista uma regra de integridade, gera uma mensagem de erro personalizada quando ela não for obedecida:
             {json_payload} 
             Exemplo de formato de saída:
                 Scenario Outline: Incluir modalidade com sucesso
@@ -99,7 +101,7 @@ def generate_gherkin_feature(json_payload):
         )
 
         task_gherkin_review = Task(
-            description="Revise o código gherkin gerado e ajuste conforme necessário.",
+            description="Revise o código gherkin gerado e ajuste conforme necessário. Foque em generalizar os casos (Scenarios Outline) cobrindo mais possibilidades com os examples",
             expected_output="ONLY the gherkin code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG",
             context=[task_gherkin_code],
             agent=gherkin_reviewer_agent
@@ -118,7 +120,7 @@ def generate_gherkin_feature(json_payload):
     file_name = f"features/analise_evento_{uuid.uuid4()}.feature"
 
     final_task = Task(
-        description="Leia e compare todos os códigos Gherkin gerados e desenvolva uma versão final com base neles",
+        description="Leia e compare todos os códigos Gherkin gerados e desenvolva uma versão final com base neles. Foque em generalizar os casos (Scenarios Outline) cobrindo mais possibilidades com os examples",
         expected_output="ONLY the gherkin code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG",
         output_file=file_name,
         agent=manager,
