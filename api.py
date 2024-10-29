@@ -10,18 +10,18 @@ import uuid
 
 app = FastAPI()
 
-options = [
-    'http:localhost',
-    "http://127.0.0.1:5500"
-]
+# options = [
+#     'http:localhost',
+#     "http://127.0.0.1:5500"
+# ]
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=options,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"]
-)
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=options,
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"]
+# )
 
 load_dotenv()
 
