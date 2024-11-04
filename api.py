@@ -146,19 +146,8 @@ async def home():
 @app.post("/gherkin", responses={
     200: {
         "content": {
-            "text/plain": {
-                "example": """Feature: Excluir Resolução
-
-Scenario Outline: Nome Scenario
-    Given exemplo de given
-    When exemplo de when
-    Then exemplo de then
-
-    Examples:
-    | exemplos |
-    | exemplo1 |
-
-                """
+            "application/json": {
+                "example": {"feature": "Feature: Excluir Resolução\n\n Scenario Outline: Nome Scenario\n    Given exemplo de given\n    When exemplo de when\n    Then exemplo de then\n\n    Examples:\n      | exemplos |\n    | exemplo1 |"}
             }
             }
         }
