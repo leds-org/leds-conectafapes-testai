@@ -25,6 +25,11 @@ class Evento(BaseModel):
     evento: str
 
 
+class Feature(BaseModel):
+    feature: str
+    codigo: str
+
+
 @app.get("/")
 async def home():
     return "Rodando"
@@ -44,5 +49,14 @@ async def generate_gherkin_file(evento: Evento):
         feature_file = generate_gherkin_feature(evento.evento)
         # return FileResponse(path=feature_file, media_type='text/plain', filename=feature_file.split('/')[-1])
         return JSONResponse({"feature": feature_file})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/code-generator")
+async def generate_code_tests(feature: Feature):
+    try:
+        code_file = ...
+        return JSONResponse({"code": code_file})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
