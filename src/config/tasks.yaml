@@ -1,105 +1,133 @@
-gherkin_code:
-    description: |
-        Transform the following use case into BDD files with outline scenarios for success and error cases.
-        For each attribute, generate a custom error message when it is not provided.
-        Focus on generalizing the scenarios and covering more possibilities with examples.
-              
-        {user_case}
-        Example output format:
-        Scenario Outline: Successfully add a modality
-                Given the server provides the modality data <sigla>, <name>, <description>, <percentage>, <start_date>, <scholarships>
-                And the server selects the resolution <resolution>
-                When the system validates and saves the modality
-                Then the system should save the modality with the status "In editing"
+gherkin_tasks:
+    gherkin_code:
+        description: |
+            Transform the following use case into BDD files with outline scenarios for success and error cases.
+            For each attribute, generate a custom error message when it is not provided.
+            Focus on generalizing the scenarios and covering more possibilities with examples.
                 
-            Examples:
-                | sigla | name | description | percentage | start_date | scholarships | resolution |
-                | ABC   | Name | Desc       | 10         | 2024-01-01 | Scholarship1 | Res1       |
+            {user_case}
+            Example output format:
+            Scenario Outline: Successfully add a modality
+                    Given the server provides the modality data <sigla>, <name>, <description>, <percentage>, <start_date>, <scholarships>
+                    And the server selects the resolution <resolution>
+                    When the system validates and saves the modality
+                    Then the system should save the modality with the status "In editing"
+                    
+                Examples:
+                    | sigla | name | description | percentage | start_date | scholarships | resolution |
+                    | ABC   | Name | Desc       | 10         | 2024-01-01 | Scholarship1 | Res1       |
 
-            Scenario Outline: Add modality with error
-                Given the server provides the modality data <sigla>, <name>, <description>, <percentage>, <start_date>, <scholarships>
-                And the server selects the resolution <resolution>
-                When the system validates and cannot save the modality
-                Then the system should return an error message "<error_message>"
-                
-            Examples:
-                | sigla | name | description | percentage | start_date | scholarships | resolution | error_message                     |
-                | ABC   | Name | Desc       | -10        | 2024-01-01 | Scholarship1 | Res1      | Percentage cannot be negative     |
-    expected_output: "ONLY the gherkin code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG"
+                Scenario Outline: Add modality with error
+                    Given the server provides the modality data <sigla>, <name>, <description>, <percentage>, <start_date>, <scholarships>
+                    And the server selects the resolution <resolution>
+                    When the system validates and cannot save the modality
+                    Then the system should return an error message "<error_message>"
+                    
+                Examples:
+                    | sigla | name | description | percentage | start_date | scholarships | resolution | error_message                     |
+                    | ABC   | Name | Desc       | -10        | 2024-01-01 | Scholarship1 | Res1      | Percentage cannot be negative     |
+        expected_output: "ONLY the gherkin code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG"
 
-gherkin_review:
-    description: |
-        Based on the user case below, review and adjust the generated Gherkin code if necessary. Pay attention to writing inconsistencies and syntax errors. Verify that the scenarios cover all possibilities. Focus on generalizing the scenarios to cover more possibilities with examples.
-        {user_case}
-    expected_output: "ONLY the gherkin code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG"
+    gherkin_review:
+        description: |
+            Based on the user case below, review and adjust the generated Gherkin code if necessary. Pay attention to writing inconsistencies and syntax errors. Verify that the scenarios cover all possibilities. Focus on generalizing the scenarios to cover more possibilities with examples.
+            {user_case}
+        expected_output: "ONLY the gherkin code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG"
 
-manager_gherkin_task:
-    description: "Read and compare all generated Gherkin codes and develop a final version based on them."
-    expected_output: "ONLY the gherkin code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG"
+    manager_gherkin_task:
+        description: "Read and compare all generated Gherkin codes and develop a final version based on them."
+        expected_output: "ONLY the gherkin code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG"
 
-xunit_code_proposal:
-    description: |
-        {feature}
+info_gatherer_tasks:
+    dto_file_find:
+        description: |
+            {feature}
 
-        Based on the feature described, write xUnit.net test code that adheres to the following guidelines:
-        using ConectaFapes.Application.DTOs.CadastroModalidadesBolsas.Request;
-        using ConectaFapes.Application.DTOs.CadastroModalidadesBolsas.Response;
-        using ConectaFapes.Test.Shared;
-        using System.Net;
-        using System.Text;
-        using System.Text.Json;
+            At the path C:/Users/gabri/leds-conectafapes-backend-admin/src/ConectaFapes/ConectaFapes.Application/DTOs
+            Find the dto request file and response file for the given feature,
+            the open the file and read it content
+        expected_output: "The dto response and request class code"
+        async_execution: True
 
-        the path for the feature file should be: [FeatureFile("../../../Features/<feature title in pascal case>Feature.feature")]
+    api_url_find:
+        description: |
+            {feature}
 
-        Consistency with HttpClient and WebApplicationFactory: Ensure consistent use of HttpClient and WebApplicationFactory throughout the test implementation.
+            Read the file at C:/Users/gabri/crew2/endpoints.txt
+            Use the tool to search for the api url for the given Feature;
+            The api_url has the feature title all in lower case;
+            You should look not only for the exact correspondence, but also for similars. For example, if the feature title in lowercase is versaomodalidade, you should also consider versaomodalidadebolsa
+        expected_output: "Only the complete url path requested and the respective methods"
 
-        Validations: Implement validations to ensure:
-        Request and response class names include the DTO suffix.
-        Strings must not be null or empty; validate them before making any API call.
-        Clear error messages are displayed in case of type mismatches or missing attributes.
+xunit_tasks:
+    xunit_write:
+        description: |
+            {}
 
-        Annotations: Use Given, When, and Then annotations for test steps with explicit parameter binding.
+            Based on the feature described, write xUnit.net test code that adheres to the following guidelines:
+            using ConectaFapes.Application.DTOs.CadastroModalidadesBolsas.Request;
+            using ConectaFapes.Application.DTOs.CadastroModalidadesBolsas.Response;
+            using ConectaFapes.Test.Shared;
+            using System.Net;
+            using System.Text;
+            using System.Text.Json;
 
-        Examples for Operations: Include robust examples for GET, POST, PUT, DELETE, and specific operations like activate and deactivate.
-        Restrictions: Do not use Theory, InlineData, or Fact. All tests should focus on scenario-based behavior with clear steps.
-    output_example: xunit_code_output
-    expected_output: "ONLY the C# code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG. Also the justifications for what was generated."
+            the path for the feature file should be: [FeatureFile("../../../Features/<feature title in pascal case>Feature.feature")]
 
-xunit_review:
-    description: |
-        Based on the feature below and the given code, review and adjust the xUnit.net test code if necessary. Pay close attention to coding inconsistencies, syntax errors, and adherence to best practices. Verify that the tests cover all scenarios described in the feature and that edge cases are accounted for. Focus on making the tests efficient and readable, and ensure that they follow xUnit.net standards.
-        {feature}
-    output_example: xunit_code_output
-    expected_output: "ONLY the xUnit.net test code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG"
+            Consistency with HttpClient and WebApplicationFactory: Ensure consistent use of HttpClient and WebApplicationFactory throughout the test implementation.
 
-debate:
-    description: |
-        Based on the feature, xUnit code, and given feedback, discuss and return feedback on possible improvements and approaches to the problem, along with a new code proposal.
-        NOTE: Use Given, When, Then annotations with parameter binding. DO NOT use Theory, InlineData, or Fact.
-        {feature}
-    output_example: xunit_code_output
-    expected_output: "ONLY the C# code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG. The feedback on the previous proposal and the new proposal with justifications for this"
+            Validations: Implement validations to ensure:
+            Request and response class names include the DTO suffix.
+            Strings must not be null or empty; validate them before making any API call.
+            Clear error messages are displayed in case of type mismatches or missing attributes.
 
-manager_debate_xunit_task:
-    description: |
-        {feature}
-        Based on the feature above, review the generated xUnit.net code and develop an improved final version based on it.
-        NOTE: Use Given, When, Then annotations with parameter binding. DO NOT use Theory, InlineData, or Fact.
-    output_example: xunit_code_output
-    expected_output: "ONLY the C# code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG"
+            Annotations: Use Given, When, and Then annotations for test steps with explicit parameter binding.
 
-manager_xunit_task:
-    description: |
-        code 1:
-        {}
+            Examples for Operations: Include robust examples for GET, POST, PUT, DELETE, and specific operations like activate and deactivate.
+            Restrictions: Do not use Theory, InlineData, or Fact. All tests should focus on scenario-based behavior with clear steps.
+
+            The DTO class you should use is: {}
+
+            The api url for this feature is: {}
+        output_example: xunit_code_output
+        expected_output: "ONLY the C# code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG. Also the justifications for what was generated."
+
+    xunit_review:
+        description: |
+            Based on the feature below and the given code, review and adjust the xUnit.net test code if necessary. Pay close attention to coding inconsistencies, syntax errors, and adherence to best practices. Verify that the tests cover all scenarios described in the feature and that edge cases are accounted for. Focus on making the tests efficient and readable, and ensure that they follow xUnit.net standards.
+            {}
+        output_example: xunit_code_output
+        expected_output: "ONLY the xUnit.net test code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG"
+
+    manager_xunit_task:
+        description: |
+            code 1:
+            {}
 
 
-        code 2:
-        {}
+            code 2:
+            {}
 
-        code 3:
-        {}
+            code 3:
+            {}
 
-        Read and compare all generated C# xUnit codes and develop a final version based on them.
-    expected_output: "ONLY the C# xUnit code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG"
-    output_example: xunit_code_output
+            Read and compare all generated C# xUnit codes and develop a final version based on them.
+        expected_output: "ONLY the C# xUnit code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG"
+        output_example: xunit_code_output
+
+xunit_debate_tasks:
+    debate:
+        description: |
+            Based on the feature, xUnit code, and given feedback, discuss and return feedback on possible improvements and approaches to the problem, along with a new code proposal.
+            NOTE: Use Given, When, Then annotations with parameter binding. DO NOT use Theory, InlineData, or Fact.
+            {feature}
+        output_example: xunit_code_output
+        expected_output: "ONLY the C# code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG. The feedback on the previous proposal and the new proposal with justifications for this"
+
+    manager_debate_xunit_task:
+        description: |
+            {feature}
+            Based on the feature above, review the generated xUnit.net code and develop an improved final version based on it.
+            NOTE: Use Given, When, Then annotations with parameter binding. DO NOT use Theory, InlineData, or Fact.
+        output_example: xunit_code_output
+        expected_output: "ONLY the C# code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG"
