@@ -102,16 +102,17 @@ def info_gatherer_crew(feature: str) -> tuple[str, str]:
 
     crew.kickoff()
 
-    with open("logs/info_gather_log.txt", "w") as file:
-        file.write(
-            f"""
-            API URL FOUND:
-            {api_url_find.output.raw}
+    file = open("logs/info_gather_log.txt", "w")
+    file.write(
+        f"""
+        API URL FOUND:
+        {api_url_find.output.raw}
 
-            DTO CLASS FOUND:
-            {dto_file_find.output.raw}
-            """
-        )
+        DTO CLASS FOUND:
+        {dto_file_find.output.raw}
+        """
+    )
+    file.close()
 
     return dto_file_find.output.raw, api_url_find.output.raw
 
