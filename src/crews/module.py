@@ -8,10 +8,8 @@ from yaml import safe_load
 load_dotenv()
 
 agents: Dict[str, Agent] = {}
-print(os.getenv("GOOGLE_API_KEY"))
 
 def init_llm(config = {}, temp = 0.0, api_key = os.getenv("GOOGLE_API_KEY"), model = os.getenv("DEFAULT_LLM_MODEL")) -> LLM:
-    print(api_key)
     return LLM(
         model=config.get("model", model),
         temperature=config.get("temperature", temp),
@@ -115,15 +113,13 @@ def init_agent(config: dict[str, str], llm , tools=[]) -> Union[Agent, None]:
 #         code_execution_mode = code_execution_mode
 #     )
 
-def init_task(config: Dict[str, str], agent: Agent = None, context=None, tools=[]) -> Union[Task, None]:
+def init_task(config: Dict[str, str], agent: Agent = None, context=None, tools=[], output_file="") -> Union[Task, None]:
     if "description" not in config:
         print("Task description must be defined")
         return
     if "expected_output" not in config:
         print("Task expected_output must be defined")
         return
-
-    print(config.get("async_execution", False))
 
     return Task(
         description=config.get("description"),
@@ -135,7 +131,7 @@ def init_task(config: Dict[str, str], agent: Agent = None, context=None, tools=[
         config = None,
         output_json = config.get("output_json", None),
         output_pydantic = config.get("output_pydantic", None),
-        output_file = config.get("output_file", ""),
+        output_file = output_file,
         human_input = config.get("human_input", False),
         converter_cls = config.get("converter_cls", None),
         callback = config.get("callback", None)
@@ -172,8 +168,8 @@ def init_task(config: Dict[str, str], agent: Agent = None, context=None, tools=[
 #         callback = callback
 #     )
 
-def bind_output_example(*tasks) -> None:
-    print(tasks)
+# def bind_output_example(*tasks) -> None:
+#     print(tasks)
     #task["description"] = task["description"] + task["output_example"]
 
 def read_yaml(file_path: str) -> Dict[str, str]:

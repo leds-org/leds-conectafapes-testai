@@ -35,8 +35,18 @@ gherkin_tasks:
         expected_output: "ONLY the gherkin code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG"
 
     manager_gherkin_task:
-        description: "Read and compare all generated Gherkin codes and develop a final version based on them."
+        description: |
+            {}
+
+            {}
+
+            {}
+
+            Read and compare all generated Gherkin codes above and develop a final version based on them.
+
+            After you generated the final version of the gherkin write a file with the name based on the user case in a folder called feature
         expected_output: "ONLY the gherkin code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG"
+        output_file: "features/gherkin.feature"
 
 info_gatherer_tasks:
     dto_file_find:
@@ -114,6 +124,7 @@ xunit_tasks:
             Read and compare all generated C# xUnit codes and develop a final version based on them.
         expected_output: "ONLY the C# xUnit code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG"
         output_example: xunit_code_output
+        output_file: xUnit/codigo.cs
 
 xunit_debate_tasks:
     debate:

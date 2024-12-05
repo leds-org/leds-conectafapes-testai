@@ -1,62 +1,46 @@
 from crewai import Agent, Task, Crew, Process, LLM
-#import os
+from crewai_tools import FileWriterTool
 from dotenv import load_dotenv
-#import json
-from typing import Dict, List
-from module import init_task, init_agent, init_llm
+from typing import Dict
+from module import init_task, init_agent, init_llm, get_yaml_config
+import asyncio
 
 load_dotenv()
 
-def crew_gherkin(user_case: str, strings: Dict[str, str]) -> str:
-    
-    llm_low_temp: LLM = init_llm()
-    llm_high_temp: LLM = init_llm(temp=0.6)
+yaml_config = get_yaml_config(base_path="src/config", files=["agents", "tasks", "output_examples"])
+agents_config = yaml_config["agents"]
+tasks_config = yaml_config["tasks"]
+outputs_examples = yaml_config["output_examples"]
 
-    agents_dict: Dict[str, str] = strings["agents"]
-    tasks_dict: Dict[str, str] = strings["tasks"]
-    
-    tasks: List[Task] = []
-    agents: List[Agent] = []
+llm_low_temp: LLM = init_llm()
+llm_high_temp: LLM = init_llm(temp=0.6)
 
-    for turn in range(1,4):
-        agents_dict['gherkin_writer']['role'] = agents_dict['gherkin_writer']['role'].format(turn=turn)
-        gherkin_writer_agent: Agent = init_agent(agents_dict["gherkin_writer"], llm_high_temp)
+def crew_generation_gherkin(user_case: str) -> Crew:
 
-        agents_dict['gherkin_reviewer']['role'] = agents_dict['gherkin_reviewer']['role'].format(turn=turn)
-        gherkin_reviewer_agent: Agent = init_agent(agents_dict["gherkin_reviewer"], llm_low_temp)
+    crew_agents: dict[str, str] = agents_config["gherkin_crew"]
+    crew_tasks: dict[str, str] = tasks_config["gherkin_tasks"]
 
-        tasks_dict["gherkin_code"]["description"] = tasks_dict["gherkin_code"]["description"].format(user_case=user_case)
-        task_gherkin_code: Task = init_task(
-            tasks_dict["gherkin_code"],
-            gherkin_writer_agent,
-            #output_file=f"etapas_geracao/rodada_{turn}.cs"
-        )
-
-        tasks_dict["gherkin_review"]["description"] = tasks_dict["gherkin_review"]["description"].format(user_case=user_case)
-        task_gherkin_review: Task = init_task(
-            tasks_dict["gherkin_review"],
-            gherkin_reviewer_agent,
-            context=[task_gherkin_code],
-            #output_file=f"etapas_geracao/revisao_{turn}.cs"
-        )
-        
-        agents.append(gherkin_writer_agent)
-        agents.append(gherkin_reviewer_agent)
-
-        tasks.append(task_gherkin_code)
-        tasks.append(task_gherkin_review)
-
-    manager: Agent = init_agent(agents_dict["manager_gherkin"], llm_low_temp)
-    final_task: Task = init_task(
-        tasks_dict["manager_gherkin_task"],
-        output_file="features/ListarModalidadeFeature.feature",
-        agent=manager,
-        context=tasks[1::2],
+    gherkin_writer: Agent = init_agent(crew_agents["gherkin_writer"], llm_high_temp)
+    crew_tasks["gherkin_code"]["description"] = crew_tasks["gherkin_code"]["description"].format(user_case=user_case)
+    gherkin_code: Task = init_task(
+        crew_tasks["gherkin_code"],
+        gherkin_writer,
+        #output_file=f"etapas_geracao/rodada_{turn}.cs"
     )
 
-    crew: Crew = Crew(
-        agents=agents+[manager],
-        tasks=tasks+[final_task],
+    gherkin_reviewer: Agent = init_agent(crew_agents["gherkin_reviewer"], llm_low_temp)
+    crew_tasks["gherkin_review"]["description"] = crew_tasks["gherkin_review"]["description"].format(user_case=user_case)
+    gherkin_review: Task = init_task(
+        crew_tasks["gherkin_review"],
+        gherkin_reviewer,
+        context=[gherkin_code],
+        #output_file=f"etapas_geracao/revisao_{turn}.cs"
+    )
+    
+
+    return Crew(
+        agents=[gherkin_writer, gherkin_reviewer],
+        tasks=[gherkin_code, gherkin_review],
         max_rpm=10,
         output_log_file="crew_log.txt",
         #manager_agent=manager_agent,
@@ -66,5 +50,48 @@ def crew_gherkin(user_case: str, strings: Dict[str, str]) -> str:
         
     )
     
-    resultado = crew.kickoff()
-    return resultado.raw
+
+def manager_crew(reviews: list[str]) -> Crew:
+    crew_agents: dict[str, str] = agents_config["gherkin_crew"]
+    crew_tasks: dict[str, str] = tasks_config["gherkin_tasks"]
+
+    crew_tasks["manager_gherkin_task"]["description"] = crew_tasks["manager_gherkin_task"]["description"] \
+    .format(reviews[0], reviews[1], reviews[2])
+    manager: Agent = init_agent(
+        crew_agents["manager_gherkin"],
+        llm=llm_low_temp,
+        tools=[FileWriterTool()],
+    )
+    final_task: Task = init_task(
+        crew_tasks["manager_gherkin_task"],
+        agent=manager,
+        output_file="features/ListarBolsaFeature.feature"
+    )
+
+    return Crew(
+        agents=[manager],
+        tasks=[final_task],
+        max_rpm=10,
+        process=Process.sequential,
+        verbose=True
+    )
+
+
+async def generate_gherkin(user_case: str) -> None:
+    crew_gherkin: Crew = crew_generation_gherkin(user_case)
+    result1 = crew_gherkin.kickoff_async()
+    result2 = crew_gherkin.kickoff_async()
+    result3 = crew_gherkin.kickoff_async()
+
+    results = await asyncio.gather(result1, result2, result3)
+    return manager_crew(results).kickoff()
+
+user_case: str = """
+E01. Listar Modalidade
+1. O Sistema exibe as modalidades de bolsa, informando: sigla, número da resolução da
+versão ativa, nome da versão ativa e um indicativo se há uma versão em edição.
+2. O Servidor Fapes pode refinar a busca das modalidades por filtro de texto.
+3. O Servidor Fapes pode selecionar uma das modalidades para realizar os demais
+eventos do UC.
+"""
+asyncio.run(generate_gherkin(user_case))

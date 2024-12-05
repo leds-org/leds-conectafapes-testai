@@ -102,25 +102,13 @@ def info_gatherer_crew(feature: str) -> tuple[str, str]:
 
     crew.kickoff()
 
-    file = open("logs/info_gather_log.txt", "w")
-    file.write(
-        f"""
-        API URL FOUND:
-        {api_url_find.output.raw}
-
-        DTO CLASS FOUND:
-        {dto_file_find.output.raw}
-        """
-    )
-    file.close()
-
     return dto_file_find.output.raw, api_url_find.output.raw
 
 def crew_xunit_generation(feature: str, api_url: str, dto_code: str) -> Crew:
     gemini_llm: LLM = init_llm(temp=0.2)
     
     crew_agents: dict[str, str] = agents_config["xunit_crew"]
-    crew_tasks: dict[str, str] = tasks_config["xunit_crew"]
+    crew_tasks: dict[str, str] = tasks_config["xunit_tasks"]
 
     ###
     #bind das features e concantenacao com o output de exemplo
@@ -137,22 +125,22 @@ def crew_xunit_generation(feature: str, api_url: str, dto_code: str) -> Crew:
     
     #write xunit
     xunit_writer: Agent = init_agent(
-        crew_agents["xunit_writer"],
-        gemini_llm
+        config=crew_agents["xunit_writer"],
+        llm=gemini_llm
         )
     xunit_write: Task = init_task(
-        crew_tasks["xunit_write"],
+        config=crew_tasks["xunit_write"],
         agent=xunit_writer
         )
 
     #xunit review
     xunit_reviewer: Agent = init_agent(
-        crew_agents["xunit_reviewer"],
-        gemini_llm
+        config=crew_agents["xunit_reviewer"],
+        llm=gemini_llm
     )
     xunit_review: Task = init_task(
-        crew_tasks["xunit_review"],
-        xunit_reviewer,
+        config=crew_tasks["xunit_review"],
+        agent=xunit_reviewer,
         context=[xunit_write],
         )
     
@@ -170,8 +158,8 @@ def crew_xunit_generation(feature: str, api_url: str, dto_code: str) -> Crew:
 
 def manager_crew(reviews: tuple[str]) -> None:
 
-    crew_agents: dict[str, str] = crews_agents["xunit_crew"]
-    crew_tasks : dict[str, str] = crews_tasks["xunit_tasks"]
+    crew_agents: dict[str, str] = agents_config["xunit_crew"]
+    crew_tasks : dict[str, str] = tasks_config["xunit_tasks"]
 
     #bind da feature e output example
     crew_tasks["manager_xunit_task"]["description"] = \
@@ -181,13 +169,13 @@ def manager_crew(reviews: tuple[str]) -> None:
 
     #manager
     manager: Agent = init_agent(
-        crew_agents["result_analysis_manager"],
-        llm_low_temp
+        config=crew_agents["result_analysis_manager"],
+        llm=llm_low_temp
     )
     manager_task: Task = init_task(
-        crew_tasks["manager_xunit_task"],
-        manager, 
-        output_file="VersionarModalidadeStepAI.cs"
+        config=crew_tasks["manager_xunit_task"],
+        agent=manager,
+        output_file="xUnit/codigo.cs"
     )
     #
 
@@ -215,5 +203,4 @@ with open("features/ModalidadeBolsaFeature.feature") as file:
     feature = file.read()
     dto_code = "dto class"
     api_url = "api url"
-
-    info_gatherer_crew(feature)
+    asyncio.run(xunit_generation(feature))
