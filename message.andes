@@ -1,0 +1,585 @@
+overview modalidade {
+            name:"Módulo Pagamento de Bolsistas"
+            description:"Este documento apresenta a análise do módulo Pagamento de Bolsistas da plataforma ConectaFapes, com a contextualização do problema, e a aplicação de técnicas de documentação de requisitos, modelagem de casos de uso e modelagem de classes."
+            purpose : "O módulo Pagamento de Bolsistas visa permitir o controle de pagamentos mensais aos bolsistas de editais da FAPES."
+            miniworld : 
+            "
+            A FAPES gerencia centenas de editais e projetos com milhares de bolsistas alocados. A cada mês é necessário contabilizar as bolsas dos editais sob responsabilidade de cada área técnica a serem agrupadas em uma folha de pagamento que, após autorizada, é enviada ao Banestes para que os pagamentos sejam feitos aos respectivos bolsistas.
+            O processo de pagamento ocorre em ciclos mensais que contam com três marcos relevantes: Data Limite de Solicitação de Bolsas (M1), Data Prevista de Geração da Folha Normal (M2) e Data de Pagamento da Folha Normal (M3). Tais marcos devem ser definidos, mês a mês, em um calendário atual.
+            Assim, cada ciclo mensal de pagamentos ocorre da seguinte maneira:
+            Os coordenadores de projeto solicitam novas alocações de bolsas até o prazo limite de M1 (até o final do dia).
+            No dia seguinte ao M1 (M1+1), os editais ativos, e suas informações sobre bolsas (tais como quantidade bolsas vigentes, novas, pendentes e valores), são listados para suas respectivas áreas técnicas para que elas decidam sobre sua liberação para a folha.
+            Cada área técnica define os editais que deseja liberar (ou não) o pagamento daquela competência (ou anteriores, se pendentes). Em geral, os editais são liberados após a resolução de bolsas pendentes (aprovação ou negação das alocações solicitadas).
+            A partir do marco M2, a GEPOF pode monitorar a liberação dos editais no mês e gerar uma folha de pagamento. Quando a folha é a primeira do mês, é dita Folha Normal, as seguintes são Folhas Complementares.
+            A geração de uma folha de pagamento implica em relacionar todos os pagamentos dos bolsistas alocados a projetos dos editais que foram liberados pelas áreas técnicas naquele mês.
+            Uma vez gerada, a folha não pode mais ter editais ou pagamentos alterados, mas podem ser geradas folhas complementares incluindo editais liberados posteriormente ou bolsistas com alocação aprovada após a geração da folha anterior. Uma folha gerada também pode ser cancelada, para que seja gerada novamente com prováveis mudanças.
+            A DIRAF decide sobre a autorização ou rejeição de uma folha gerada. Em caso de rejeição, a folha fica cancelada, podendo ser gerada novamente.
+            Em caso de autorização, a folha segue para pagamento no Banestes, a ser efetuado na data do marco M3.
+            Ao longo de cada ciclo, são gerados documentos referentes às decisões de geração e autorização da folha, para serem anexados aos processos no E-DOCs.
+
+            Como exemplo, considere o seguinte cenário focado no curso normal de eventos de pagamento (exceções estão especificadas ao longo do documento).
+            No mês de outubro de 2024, a Área Técnica GEINOV possui 10 editais ativos (Alfa, Beta, Gama etc.), cada um com 5 projetos com 10 bolsistas cada. Temos, portanto, 500 bolsistas ativos na GEINOV. Antes do marco M1, o coordenador do projeto Alfa-01, do edital Alfa, solicita a inclusão de mais 4 bolsistas a seu projeto.
+            A partir de M1+1 (ex: dia 06/10), o Gerente da GEINOV visualiza a sua lista de 10 editais, cada um com 50 bolsistas, tendo o edital Alfa 4 pendências. À medida que as pendências são resolvidas por meio da avaliação das solicitações, o número de pendências diminui, incrementando-se o número de bolsistas ativos, caso aprovadas. Quando os técnicos da GEINOV aprovam 3 das solicitações e reprovam 1, o gerente visualiza o edital Alfa com 53 bolsistas ativos e, não havendo mais pendências, decide liberar todos os seus 10 editais para a folha.
+            Ao chegar a M2 (ex.: dia 15/10), o Gerente da GEPOF, visualiza um resumo de todas as áreas e observa que a GEINOV não possui mais editais a liberar, já tendo liberado editais totalizando 503 bolsistas no valor de R$ 503.000,00. A GEPOF avalia a situação de liberação da GEINOV e das outras áreas, e decide prosseguir com a geração da folha. Um resumo é exibido e o gerente confirma, gerando uma Folha de Pagamento Normal para o mês de Outubro, totalizando R$ 2.503.000,00 em bolsas, com os pagamentos a serem efetivados em M3 (ex:. 31/10). A Folha Normal de Outubro considera todos os pagamentos da competência de Outubro dos bolsistas alocados aos projetos dos editais liberados pelas áreas da FAPES.
+            Com a folha gerada, a Diretora Administrativa (DIRAF) avalia os pagamentos previstos e autoriza o pagamento da Folha. O processo segue para que o BANDES libere os recursos e o Banestes realize os pagamentos.
+
+            "
+        
+        }
+
+requirements xxxx {
+    name :"Requisitos do modulox"
+    
+    functional_requirement RF01 {
+        description: "O sistema deve permitir definir um calendário."
+        priority:"Alta"
+        depend: xxxx.RF07      
+    }
+
+    functional_requirement RF02 { 
+        description: "O sistema deve permitir liberar editais para pagamento."
+        depend: xxxx.RF01  
+    }
+
+    functional_requirement RF03 {
+        description: "O sistema deve permitir gerar uma folha de pagamento com os editais liberado."        
+        depend: xxxx.RF01, xxxx.RF02    
+    }
+
+    functional_requirement RF04 {
+        description: "O sistema deve permitir visualizar detalhes dos projetos de um edital."
+        priority: "Alta"    
+    }
+
+    functional_requirement RF05 {
+        description: "O sistema deve permitir visualizar detalhes dos bolsistas de um projeto."        
+    }
+
+    functional_requirement RF06 {
+        description: "O sistema deve permitir consultar folhas de pagamento."
+        depend: xxxx.RF03        
+    }
+
+    functional_requirement RF07 {
+        description: "O sistema deve permitir decidir sobre a autorização de pagamento de uma folha."        
+        depend: xxxx.RF03    
+    }
+
+    functional_requirement RF08 { 
+        description: "O sistema deve permitir gerar documentos pdf para anexar ao EDOCs."        
+    }
+
+    functional_requirement RF09 { 
+        description: "O sistema deve permitir gerar arquivos de cadastro e pagamento dos bolsistas ao Banestes."        
+        depend: xxxx.RF01, xxxx.RF03
+    }
+
+    functional_requirement RF10 {
+        description: "O sistema deve processar as informações de arquivos de pagamento recebidos pelo Banestes."        
+    }
+
+
+    non_functional_requirement RNF01{
+        description: "O sistema deve garantir que, em cada confirmação de ação, os impactos potenciais da ação sejam apresentados de forma clara e compreensível ao usuário."
+        priority: "Alta"
+    }
+
+    non_functional_requirement RNF002{
+        description:""
+        depend: xxxx.RF05
+    }
+
+    bussines_rule RN01{
+        description: "Para definição do Marco de solicitação M1 (Data Limite de Solicitação de Bolsas) serão aceitas apenas datas dentro do mês de competência ou do mês anterior ao mês de competência. Por exemplo, para o mês de julho, M1 pode ter datas de Junho e Julho."
+        priority: "Alta"
+        depend: xxxx.RF01, xxxx.RF02
+    }
+
+    bussines_rule RN02{
+        description: "Para definição do Marco de Geração da Folha M2 (Data Prevista de Geração da Folha Normal) serão aceitas apenas datas dentro do mês de competência. Por exemplo, para o mês de Julho, M2 deve ser data de Julho conforme."
+        priority: "Alta"
+        depend: xxxx.RF01, xxxx.RF03
+    }
+
+    bussines_rule RN03{
+        description: "Para definição do Marco de pagamento M3 (Data de Pagamento da Folha Normal) serão aceitas apenas datas dentro do mês de competência ou do mês posterior ao mês de competência. Por exemplo, para o mês de julho, M3 deve ser uma data do mês de julho ou agosto."
+        priority: "Alta"
+        depend: xxxx.RF01, xxxx.RF09
+    }
+
+    bussines_rule RN04{
+        description: "O marco M1 pode ser editado até o fim do dia atualmente definido para o marco. Considerando que o marco M1 seja dia 05/08, o sistema só permite que a mudança de data ocorra até às 23:59h desse mesmo dia."
+        priority: "Alta"
+        depend: xxxx.RF01
+    }
+
+    bussines_rule RN05{
+        description: "O marco M2 pode ser editado até o fim do dia anterior ao atualmente definido para o marco. Considerando que o marco M2 seja dia 15/08, o sistema só permite que a mudança de data ocorra até às 23:59h do dia 14/08."
+        priority: "Alta"
+        depend: xxxx.RF01
+    }
+
+    bussines_rule RN06{
+        description: "O marco M3 pode ser editado até antes da efetiva geração da Folha Normal do mês em questão, pois no momento da geração o arquivo de remessa é gerado e a data de pagamento definida é gravada no arquivo."
+        priority: "Alta"
+        depend: xxxx.RF01
+    }
+
+    bussines_rule RN07{
+        description: "Para cada mês em questão, o marco M1 ocorre antes do marco M2 e o marco M2 ocorre antes do marco M3."
+        priority: "Alta"
+        depend: xxxx.RF01
+    }
+
+    bussines_rule RN08{
+        description: "O marco M2 de um dado mês não pode ocorrer depois que o marco M1 do mês seguinte."
+        priority: "Alta"
+        depend: xxxx.RF01
+    }
+
+    bussines_rule RN09{
+        description: "Para cada mês em questão, é recomendável que haja uma distância maior que 5 dias entre M1 e M2 e entre M2 e M3."
+        priority: "Alta"
+        depend: xxxx.RF01
+    }
+
+    bussines_rule RN10{
+        description: "A Folha de uma competência é considerada Normal quando é a primeira folha gerada a partir do marco de gerar folha do mês vigente. Se a Folha gerada não for a primeira, é considerada uma folha Complementar."
+        priority: "Alta"
+        depend: xxxx.RF03
+    }
+
+    bussines_rule RN11{
+        description: "Editais que foram liberados e contêm pendência de avaliação de bolsa não precisarão de nova liberação quando as bolsas forem aprovadas. Quando a avaliação da bolsa for aprovada as bolsas que eram pendentes ficarão, automaticamente, disponíveis para gerar folha."
+        priority: "Alta"
+        depend: xxxx.RF02
+    }
+
+    bussines_rule RN12{
+        description: "As áreas só podem liberar os editais para a competência do mês seguinte após o marco M1 + 1 dia."
+        priority: "Alta"
+        depend: xxxx.RF02
+    }
+
+    bussines_rule RN13{
+        description: "Quando um edital entra em uma folha ele não pode mais sofrer alterações de decisão de liberação."
+        priority: "Alta"
+        depend: xxxx.RF02
+    }
+
+    bussines_rule RN14{
+        description: "Não é possível desfazer cancelar uma folha autorizada."
+        priority: "Alta"
+    }
+
+    bussines_rule RN15{
+        description: "Não é possível gerar uma nova folha se a última folha ainda estiver no estado Gerada (ou seja, a folha foi gerada mas ainda não teve uma decisão sobre sua autorização ou cancelamento)."
+        priority: "Alta"
+        depend: xxxx.RF03
+    }
+
+    bussines_rule RN16{
+        description: "Caso uma folha do mês seja cancelada, a próxima ação de gerar folha daquele mês irá gerá-la novamente (e não gerar uma nova folha)."
+        priority: "Alta"
+        depend: xxxx.RF03
+    }
+
+}
+
+   module Main {
+        description: "Esse modolo é sobre um diagrama que contém a entidade Projeto, Tempo e um Enum Status"
+        entity Project {
+            nome: string
+            start_date: date
+            end_date: date
+            budget: decimal
+            client: string
+            sponsor: string
+            goal: string
+            project_father OneToMany Project
+            time OneToMany Time
+            status uses Status
+        }
+
+        entity Time {
+            nome: string
+            start_date: date
+            end_date: date
+            budget: decimal
+            client: string
+            sponsor: string
+            goal: string
+            project_father OneToMany Project
+            time OneToMany Time
+            status uses Status
+        }
+
+        enum Status {
+            Ativo
+            Cancelado
+            Entregue
+        }
+   }
+
+   actor Roberto is Project
+
+
+usecase UC05 {
+    name: "Definir Calendário das Folhas"
+    description: "Definir Calendário das Folhas"
+    performer: Roberto
+
+    event E021 {
+        name: "Visualizar Calendário Anual"
+        description: "O objetivo deste evento é visualizar os calendários definidos em cada mês, em um dado ano."
+        depend: UC05.E022
+        action: "
+            O sistema exibe um conjunto de opções de ano do calendário, com o ano atual selecionado por padrão.
+            O Gerente GEPOF seleciona o ano em que deseja visualizar o calendário. 
+            O sistema exibe os marcos definidos para cada mês do ano selecionado. Os marcos são: (M1) Data Limite de Solicitação de Bolsas, (M2) Data Prevista de Geração da Folha Normal, e (M3) Data de Pagamento da Folha Normal.
+        "
+    }
+
+    event E022 {
+        name: "Definir Marcos da Folha"
+        description: "O objetivo deste evento é definir marcos a serem praticados em cada mês, em um ano específico."
+        depend: UC06.E023
+        action: "
+        O Gerente GEPOF visualiza o calendário usando o evento Visualizar Calendário Anual ou cria um novo calendário selecionando o ano subsequente ao atual.
+        O Gerente GEPOF define (ou altera), para cada mês, exatamente três marcos: (M1) Data Limite de Solicitação de Bolsas, (M2) Data Prevista de Geração da Folha Normal, e (M3) Data de Pagamento da Folha Normal.
+        Os marcos somente podem ser alterados quando:
+            M1: é menor ou igual à data atual (RN04),
+            M2: é menor que a data atual (RN05),
+            M3: não foi gerada a folha normal do mês (RN06).
+        Para cada mês, tanto na definição como na alteração, o sistema verifica se:
+            M1 está dentro do mês em questão ou do mês anterior (RN01),
+            M2 está dentro do mês em questão (RN02),
+            M3 está dentro do mês em questão ou do subsequente (RN03),
+            M1 ocorre antes de M2 e M2 ocorre antes de M3 (RN07),
+            M2 de um dado mês ocorre antes do M1 do mês seguinte (RN08).
+        Caso alguma dessas condições não seja atendida, uma mensagem de erro é exibida, para que o usuário corrija as definições feitas.
+        Para cada mês, tanto na definição como na alteração, o sistema verifica se:
+            Há uma distância maior que 5 dias entre M1 e M2 e entre M2 e M3 (RN09).
+        Caso alguma dessas condições não seja atendida, um alerta é emitido e o usuário tem a opção de rever ou manter as definições feitas.
+        O sistema registra os marcos informados.
+
+        "
+    }
+}
+
+usecase UC06 {
+    name: "Definir Calendário das Folhas"
+    description: "O objetivo deste evento é exibir à Área Técnica seus editais com bolsas vigentes ou pendentes, no mês em questão, informando os seus status de liberação."
+    performer: Roberto
+
+    event E023 {
+        name: "Visualizar Liberação de Editais"
+        description: "Visualizar Liberação de Editais"
+        action: "Fluxo Normal
+        O sistema exibe a Área Técnica (do Gerente logado) e o mês em questão (mês do Plano Mensal mais recente com M1+1 ocorrido).
+        O sistema exibe uma das seguintes informações sobre a geração da folha normal do mês em questão:
+        Caso a data atual seja menor que M2: Indica quantos dias faltam para a data prevista de geração da folha (M2) e a data de M2. Ex.: Faltam N dias para a geração da folha da folha normal, prevista para <M2>.
+        Caso a data atual seja maior ou igual a M2 e a folha normal ainda não foi gerada: Indica a data prevista para geração da folha já passou, a data de M2 e que ainda não foi efetivada. Ex.: A geração da folha da folha normal estava prevista para <M2>, mas ainda não foi efetivada.
+        Caso a data atual seja maior ou igual a M2 e a folha normal já tenha sido gerada: Indica que a folha normal já foi gerada e a data da efetiva geração da folha. Ex.: A folha normal foi gerada em <data de geração da folha>.
+        O sistema exibe, para o mês em questão e anteriores, tabelas (uma por mês) listando os editais da área técnica (classe EditalCompetencia) que possuam bolsas vigentes ou pendentes, com as seguintes informações:
+        Edital: nome, com link para seu detalhamento via evento Visualizar Projetos.
+        Status: status de liberação do edital para a competência em questão: Sem Decisão, Liberado, Não Liberado, Incluído em Folha. 
+        Bolsas Vigentes: quantidade total de bolsas com pagamento previsto (pagamentos das alocações dos projetos do edital cujo mês de competência é igual ao mês em questão).
+        Novas Bolsas: quantidade total de pagamentos previstos para as alocações de bolsistas dos projetos do edital, iniciadas na competência em questão (primeira cota de pagamento). Ex.: 70 bolsas vigentes, das quais 6 são novas bolsas.
+        Pendentes: quantidade total de alocações de bolsistas pendentes (status Pendente de Avaliação ou Em Avaliação) dos projetos do edital.
+        Valor Total: somatório dos valores das Bolsas Vigentes do edital.
+        Ações: ações de liberação permitidas para cada edital na competência, de acordo com o Status atual:
+        Sem Decisão: ações de “marcar para liberar”, “marcar para não liberar”, “desfazer marcação” (se houver alguma) e “ver detalhes”;
+        Liberado: ações de “marcar para não liberar” e “ver detalhes”;
+        Não Liberado: ações de “marcar para liberar”, “editar justificativa” e “ver detalhes”;
+        Incluído em Folha: ação de “ver detalhes”.
+        Cada linha das tabelas, conforme seu status e ações tomadas, segue o seguinte padrão de cores:
+        Padrão de Cores
+        Liberar Editais
+        AÇÃO
+        Carregar / Submeter
+        Marcar para Liberar
+        Marcar para Não Liberar
+        Desfazer Marcação
+        STATUS
+        Sem Decisão
+        Branco
+        Verde
+        Rosa
+        Branco
+        Liberado
+        Verde
+        N/A
+        Rosa
+        Verde
+        Não Liberado
+        Rosa
+        Verde
+        N/A
+        Rosa
+        Incluído em Folha
+        Cinza
+        N/A
+        N/A
+        N/A
+
+        O sistema exibe, na tabela do mês em questão (primeira), todos os editais que possuam bolsas vigentes ou pendentes, qualquer que seja seu status de liberação. 
+        O sistema exibe, nas tabelas de meses anteriores, somente os editais que possuam bolsas vigentes ou pendentes, com Status de liberação: Sem Decisão e Não Liberado.
+        O Gerente da Área Técnica pode refinar a visualização filtrando a busca por nome do edital e pelo status.
+        "
+    }
+
+    event E024 {
+        name: "Liberar Editais para Pagamento"
+        description: "O objetivo deste evento é permitir ao Gerente da Área Técnica decidir quais editais serão incluídos na próxima Folha de Pagamento (Normal ou Complementar), antes da sua geração."
+        action: "Fluxo Normal
+            O Gerente da Área Técnica, após o marco M1+1 dia, visualiza os editais por competência a partir do evento Visualizar Liberação de Edital.
+            O Gerente da Área Técnica, para cada Edital por Competência listado, pode tomar as seguintes ações, de acordo com o atual Status do Edital por Competência:
+            Marcar para liberar: em um Edital Sem Decisão ou Não Liberado, sinaliza que o status será alterado para Liberado após a submissão.
+            Marcar para não liberar: em um Edital Sem Decisão ou Liberado, sinaliza que o status será alterado para Não Liberado após a submissão, e solicita justificativa.
+            Desfazer marcação: em um Edital com alguma marcação, a marcação será desfeita e o status permanecerá o atual.
+            Marcar todos para liberar: em todos os Editais Sem Decisão ou Não Liberado, sinaliza que seus status serão alterados para Liberado após a submissão.
+            Editar Justificativa: permite a edição da justificativa em um Edital Não Liberado.
+            Ver Detalhes: mostra os detalhes do edital, via evento Visualizar Projetos.
+            O Gerente da Área Técnica submete as decisões e o sistema mostra um resumo com a situação que será atingida após a confirmação, incluindo as quantidades de editais Sem Decisão, Liberados e Não Liberados.
+            O Gerente da Área Técnica confirma a decisão.
+            O sistema realiza as modificações marcadas nos status dos Editais por Competência. Para cada Edital por Competência que teve seu status alterado para Liberado ou Não Liberado, é criado um registro da Decisão de Liberação, com usuário, horário, se foi liberado ou não, e a justificativa para os Não Liberados.
+            Fluxo Normal
+            O Gerente da Área Técnica, após o marco M1+1 dia, visualiza os editais por competência a partir do evento Visualizar Liberação de Edital.
+            O Gerente da Área Técnica, para cada Edital por Competência listado, pode tomar as seguintes ações, de acordo com o atual Status do Edital por Competência:
+            Marcar para liberar: em um Edital Sem Decisão ou Não Liberado, sinaliza que o status será alterado para Liberado após a submissão.
+            Marcar para não liberar: em um Edital Sem Decisão ou Liberado, sinaliza que o status será alterado para Não Liberado após a submissão, e solicita justificativa.
+            Desfazer marcação: em um Edital com alguma marcação, a marcação será desfeita e o status permanecerá o atual.
+            Marcar todos para liberar: em todos os Editais Sem Decisão ou Não Liberado, sinaliza que seus status serão alterados para Liberado após a submissão.
+            Editar Justificativa: permite a edição da justificativa em um Edital Não Liberado.
+            Ver Detalhes: mostra os detalhes do edital, via evento Visualizar Projetos.
+            O Gerente da Área Técnica submete as decisões e o sistema mostra um resumo com a situação que será atingida após a confirmação, incluindo as quantidades de editais Sem Decisão, Liberados e Não Liberados.
+            O Gerente da Área Técnica confirma a decisão.
+            O sistema realiza as modificações marcadas nos status dos Editais por Competência. Para cada Edital por Competência que teve seu status alterado para Liberado ou Não Liberado, é criado um registro da Decisão de Liberação, com usuário, horário, se foi liberado ou não, e a justificativa para os Não Liberados.
+            "
+    }
+}
+
+usecase UC07 {
+    name: "Gerenciar Folhas de Pagamento"
+    description: "Gerenciar Folhas de Pagamento"
+    performer: Roberto
+    requirements: xxxx.RF01
+
+    event E025 {
+        name: "Monitorar Liberações das Áreas"
+        description: "O objetivo deste evento é permitir ao Gerente da GEPOF monitorar informações sobre a liberação de editais por Área Técnica."
+        action: "Fluxo Normal
+            O sistema exibe qual é o mês em questão (mês do Plano Mensal mais recente com M2 ocorrido) e o tipo de folha a ser gerada. 
+                Caso a última folha gerada ainda esteja no estado Gerada, não será permitido gerar uma nova folha (RN15). Nesse caso, o sistema deve exibir uma mensagem informando a folha que está aguardando autorização. Ex. Aguardando decisão sobre autorização da Folha Normal de Setembro. Não é permitido gerar nova folha!
+                Caso a folha mais recente do mês em questão esteja no status Cancelada, esta folha será gerada novamente (RN16). Ex. Folha Normal de Setembro será gerada Novamente.
+                Caso seja a primeira folha do mês, será uma Folha Normal, caso seja a segunda, Folha Complementar 1, e assim sucessivamente. Ex.: Folha Normal de Setembro será gerada.
+            O sistema exibe o histórico de decisões das folhas do mês:
+
+            
+                Caso não haja folha gerada para o mês: informa a data prevista para geração da folha normal do mês (marco M2). Ex.: A data prevista para gerar a folha normal é <M2>.
+                Caso haja folha(s) gerada(s) para o mês: informa o histórico de decisões das folhas e a data a partir da qual uma folha normal poderá ser gerada, ou seja, o próximo M2. Ex.:
+                Folha Normal de Setembro gerada em 17/09/2024.
+                Folha Normal de Setembro rejeitada em 18/09/2024.
+                Folha Normal de Setembro gerada em 19/09/2024.
+                Folha Normal de Setembro autorizada em 20/09/2024.
+                Folha Complementar 1 de Setembro gerada em 23/09/2024.
+                A Folha Normal de Outubro poderá ser gerada a partir de <M2 de Outubro>.
+            
+            
+            O sistema exibe uma das informações sobre a prévia da Folha Normal do mês seguinte:
+                Caso M1+1 do mês seguinte ao mês em questão tenha sido atingido: link para a prévia via evento Visualizar Prévia de Folha Normal. Ex.: Visualizar Prévia da Folha Normal de Outubro.
+                Caso contrário: informa que a prévia estará disponível a partir de M1+1. Ex.: Prévia da Folha Normal de Outubro disponível a partir de <M1+1>. 
+            O sistema exibe, para o mês em questão, uma tabela listando as Áreas Técnicas, com as seguintes informações:
+                Área Técnica: nome, com link para acompanhar as liberações da área por edital, via evento Visualizar Liberações da Área.
+                Editais Não Liberados: quantidade de Editais da Competência com status Não Liberado ou Sem Decisão.
+                Bolsas a Pagar: quantidade total de bolsas a pagar da área (quantidade de pagamentos, com status Alocado e mês de competência igual ao mês em questão, referentes a alocações dos projetos dos editais da área liberados para a competência em questão).
+                Valor a Pagar: somatório dos valores das Bolsas a Pagar.
+                Na última linha é exibido o total com a soma de cada uma das colunas.
+            O sistema exibe, para cada mês anterior, uma tabela com a mesma estrutura, listando apenas as áreas que possuam ao menos uma das colunas não zeradas.
+            O sistema exibe, por fim, o valor total previsto para a folha considerando todos os meses.
+            O Gerente GEPOF pode executar o evento Gerar Folha, a fim de gerar uma nova folha de pagamento para o mês em questão (exceto no caso em que haja uma folha do mês no estado Gerada - item 1.a deste evento)."
+    }
+
+    event E026 {
+        name: "Gerar Folha"
+        description: "O objetivo deste evento é exibir ao Gerente da GEPOF um retrato do que será pago ao gerar a folha e efetuar a geração da Folha de Pagamento."
+        action: "Fluxo Normal
+            O sistema exibe, como título, qual é o mês em questão e o tipo de folha a ser gerada. Ex.: Gerar Folha Normal de Setembro.
+            O sistema exibe, para cada Área Técnica, os meses que possuem algum edital com bolsas a pagar na folha a ser gerada.
+                O sistema exibe, para cada mês, uma tabela listando os editais da área técnica que possuam bolsas a pagar, com as seguintes informações:
+                    Edital: nome do edital.
+                    Status: status de liberação do edital para a competência em questão: somente Liberados e Incluídos em Folha.
+                    Bolsas Vigentes: quantidade total de bolsas da competência listada (pagamentos das alocações dos projetos do edital cujo mês de competência é igual ao mês listado).
+                    Pendentes: quantidade total de alocações de bolsistas pendentes (status Pendente de Avaliação ou Em Avaliação) dos projetos do edital.
+                    Bolsas a Pagar: quantidade total de bolsas da competência listada a serem pagas na Folha sendo gerada (pagamentos das alocações dos projetos do edital cujo mês de competência é igual ao mês listado e status Alocado).
+                    Valor Total: somatório dos valores das Bolsas a Pagar do edital na competência listada.
+            O sistema exibe, como totalização da área técnica, o somatório dos valores totais de todos os editais exibidos de todos os meses da área.
+            O sistema exibe, como totalização da folha, o somatório dos valores de cada área técnica.
+            O Gerente GEPOF analisa as informações e solicita a geração da Folha.
+            O sistema exibe uma mensagem de confirmação com um resumo de informações da folha sendo gerada: nome da folha (ex.: Folha Normal de Setembro), quantidade total de bolsas, valor total da folha e data de pagamento. No caso de folha normal, será exibida a data do marco M3. No caso de folha complementar, a data de pagamento será solicitada (protótipo).
+            O Gerente GEPOF confirma a criação da folha, implicando em:
+                Criação da Folha com status Gerada, ordem Normal ou Complementar N e a data de pagamento M3 (ou informada), referindo-se ao Plano Mensal do mês em questão. Caso se trate de uma nova geração de uma folha cancelada ou rejeitada (ou seja, há uma folha da ordem e mês em questão com status Cancelada ou Rejeitada) o status da folha é atualizado para Gerada e a data de Pagamento é atualizada para M3 (ou informada);
+                Associação de todos os Pagamentos incluídos na Folha criada (ou gerada novamente) e alteração de seus status para “Em Folha”;
+                Alteração dos status dos Editais por Competência envolvidos para “Incluído em Folha”;
+                Registro da Decisão de geração da folha, com usuário, horário e tipo de ação Geração.
+            O sistema notifica a DIRAF e realiza o evento Visualizar Folha onde visualiza as informações da folha gerada."
+    }
+
+    event E027 {
+        name: "Cancelar Folha"
+        description: "O objetivo deste evento é permitir que o Gerente da GEPOF cancele uma folha gerada antes que ela seja autorizada pela DIRAF."
+        action: "Fluxo Normal
+            O Gerente GEPOF visualiza uma folha de pagamento com status Gerada usando o evento Visualizar Folha.
+            O Gerente GEPOF analisa as informações e solicita o cancelamento da Folha.
+            O sistema exibe uma mensagem informando que a folha será cancelada e, consequentemente, todos os pagamentos incluídos nessa folha voltarão ao status Alocado e só serão efetivados caso uma nova geração de folha seja executada.
+            O sistema solicita uma justificativa e a confirmação do cancelamento.
+            O Gerente GEPOF insere uma justificativa e confirma o cancelamento implicando em: (ações similares ao item 2.b do evento E035.Decidir sobre Autorização da Folha)
+                Registro da Decisão de cancelamento da folha, com usuário, horário e tipo de ação Cancelar.
+                Atualização do status da Folha para “Cancelada”.
+                Alteração, de “Incluído em Folha” para “Liberado”, dos status dos Editais por Competência envolvidos nesta folha que não estejam envolvidos em nenhuma outra folha (ou seja, que não tenham pagamentos incluídos em outra folha).
+                Exclusão das associações de todos os pagamentos com a folha cancelada e alteração de seus status para “Alocado”.
+            O sistema realiza o evento Listar Folhas de Pagamento onde a folha cancelada será o primeiro registro listado."
+    }
+
+    event E028 {
+        name: "Visualizar Prévia de Folha Normal"
+        description: "O objetivo deste evento é permitir ao Gerente da GEPOF visualizar, entre M1 e M2 do mês corrente, o andamento da liberação dos editais pelas áreas. Note que até M2 do mês corrente ser atingido não é permitida a geração de folhas de tal mês."
+        action: "Fluxo Normal
+            O sistema exibe qual é o mês com M1+1 mais recente e a informação de que a folha normal poderá ser gerada a partir de M2 de tal mês. 
+            Ex.: Prévia da Folha Normal de Outubro
+            Folha Normal de Outubro poderá ser gerada a partir de <M2 de Outubro>.
+            O sistema exibe, para o mês em questão, uma tabela listando as Áreas Técnicas, com as seguintes informações:
+                Área Técnica: nome, com link para acompanhar as liberações da área por edital, via evento Visualizar Liberações da Área.
+                Editais Não Liberados: quantidade de Editais da Competência com status Não Liberado ou Sem Decisão.
+                Bolsas a Pagar: quantidade total de bolsas a pagar da área (quantidade de pagamentos, com status Alocado e mês de competência igual ao mês em questão, referentes a alocações dos projetos dos editais da área liberados para a competência em questão).
+                Valor a Pagar: somatório dos valores das Bolsas a Pagar.
+                Na última linha é exibido o total com a soma de cada uma das colunas.
+            O sistema exibe, para cada mês anterior, uma tabela com a mesma estrutura, listando apenas as áreas que possuam ao menos uma das colunas não zeradas.
+            O sistema exibe, por fim, o valor total previsto para a folha considerando todos os meses.
+"
+    }
+
+    event E029 {
+        name: "Visualizar Liberações da Área"
+        description: "O objetivo deste evento é permitir ao Gerente da GEPOF visualizar informações sobre a liberação de editais de uma Área Técnica específica."
+        action: "O sistema exibe a Área selecionada a partir do evento Monitorar Liberações das Áreas.
+            O sistema exibe para o mês em questão e anteriores, tabelas(uma por mês) editais da área técnica (classe EditalCompetencia) que possuam bolsas vigentes ou pendentes, com as seguintes informações:
+                Edital: nome, com link para seu detalhamento via evento Visualizar Projetos.
+                Status: status de liberação do edital para a competência em questão: Sem Decisão, Liberado, Não Liberado, Incluído em Folha. 
+                Bolsas Vigentes: quantidade total de bolsas da competência listada (pagamentos das alocações dos projetos do edital cujo mês de competência é igual ao mês listado).
+                Pendentes: quantidade total de alocações de bolsistas pendentes (status Pendente de Avaliação ou Em Avaliação) dos projetos do edital.
+                Bolsas a pagar: quantidade total de bolsas da competência listada a serem pagas na Folha sendo gerada (pagamentos das alocações dos projetos do edital cujo mês de competência é igual ao mês listado e status Alocado).
+                Valor Total: somatório dos valores das Bolsas Vigentes do edital.
+                Ações: 
+                    Ver detalhes de justificava de um edital Não liberado.
+                    mostra os detalhes do edital, via evento Visualizar Projetos
+            O sistema exibe, na tabela do mês em questão (primeira), todos os editais que possuam bolsas vigentes ou pendentes, qualquer que seja seu status de liberação. 
+            O sistema exibe, nas tabelas de meses anteriores, somente os editais que possuam bolsas vigentes ou pendentes com Status de liberação: Sem Decisão, Não Liberado e Liberado
+            O sistema exibe, como totalização da folha, o somatório dos valores de cada mês de competência.
+            O Gerente da Área Técnica pode refinar a visualização filtrando a busca por nome do edital e pelo status.
+"
+    }
+
+    event E030 {
+        name: "Visualizar Projetos"
+        description: "Este evento consiste em visualizar informações mais detalhadas de projetos de um edital em uma determinada competência."
+        action: "Fluxo Normal
+            O sistema exibe o Edital selecionado a partir do evento Monitorar Liberações das Áreas ou Visualizar Liberação de Editais
+            O sistema exibe o ano e o mês de competência ao qual o edital selecionado se refere.
+            O sistema exibe uma lista de projetos do Edital com as seguintes informações:
+                Projeto: nome do projeto, com link para seu detalhamento via evento Visualizar Bolsistas.
+                Status: status do projeto.
+                Bolsas vigentes: quantidade total de bolsas com pagamento previsto (pagamentos das alocações do projeto cujo mês de competência é igual ao mês em questão).
+                Pendentes: quantidade total de alocações de bolsistas pendentes (status Pendente de Avaliação ou Em Avaliação) .
+                Valor Total: somatório dos valores das Bolsas Vigentes do edital
+            O Gerente GEPOF pode refinar a visualização filtrando a busca por nome do projeto e pelo status.
+"
+    }
+
+    event E031 {
+        name: "Visualizar Bolsistas"
+        description: "Este evento consiste em visualizar informações de bolsistas de um projeto em uma determinada competência."
+        action: "Fluxo Normal
+            O sistema exibe o Projeto selecionado a partir do evento Visualizar Projetos.
+            O sistema exibe o ano e o mês de competência ao qual o projeto selecionado se refere.
+            O sistema exibe uma lista de bolsistas com as seguintes informações:
+                Bolsista: nome do bolsista.
+                Status: status de alocação de um bolsista.
+                Bolsa: nível da bolsa.
+                Porcentagem: valor percentual a ser recebido.
+                Cotas Pagas: quantidade de cotas alocadas e quantidade de cotas já pagas.
+                Início: data de início de vigência da alocação.
+                Fim: data de início de vigência da alocação.
+                Valor: custo unitário da bolsa
+            Nessa exibição, há uma ordenação por status padrão na qual os bolsistas pendentes estão no topo, em seguida estão os bolsistas vigentes seguidos dos demais status.
+            O sistema exibe também um resumo financeiro por meio de uma  tabela, com uma linha para cada tipo de bolsa, com as seguintes informações:
+                Tipo Bolsa: nível da bolsa
+                Bolsistas vigentes: quantidade de alocações que possuam status “Ativo”.
+                Valor: valor unitário da bolsa.
+            O Gerente da Área Técnica/ GEPOF pode refinar a busca por nome do bolsista e status da alocação.  
+"
+    }
+}
+
+usecase UC08 {
+    name: "UC08"
+    description: "Autorizar Pagamento da Folha"
+    performer: Roberto
+
+    event E032 {
+        name: "Listar Folhas de Pagamento"
+        description: "O objetivo deste evento é permitir que GEPOF e DIRAF tenham uma listagem de todas as folhas geradas e possam consultar os detalhes das folhas."
+        action: "Fluxo Normal
+            A DIRAF/GEPOF informa ao sistema o ano o qual deseja visualizar as folhas de pagamento e confirma.
+            O sistema exibe uma relação de folhas de pagamento referentes ao ano escolhido. Para cada folha, é exibido o nome, o status, data de gerar folha, data de autorização, valor total da folha.  
+            A DIRAF/A GEPOF tem como possíveis ações gerar um arquivo PDF contendo a relação de pagamentos gerada, totalizada por área e edital de uma folha e/ ou executar o evento de Visualizar Folha.
+"
+    }
+
+    event E033 {
+        name: "Visualizar Folha"
+        description: "O objetivo deste evento é permitir que GEPOF ou DIRAF visualizem as informações de uma folha por Área Técnica."
+        action: "Fluxo Normal
+            O sistema exibe ano e mês de competência da Folha, a data de geração e o status da Folha e um resumo de informações agrupadas por Área Técnica. Para cada Área Técnica, é exibido a quantidade de editais incluídos na Folha, a quantidade de bolsas e:
+                Ou valor a pagar, se a folha ainda não foi paga. 
+                Ou valor pago, se a folha já foi paga.
+            Caso o usuário seja DIRAF este pode executar o evento Decidir sobre autorização da Folha. Caso o usuário seja GEPOF, ele tem a opção de executar o evento Desfazer a  geração da folha.
+            A DIRAF/ GEPOF pode visualizar detalhes da folha de uma Área Técnica via evento Visualizar Folha com detalhes da Área Técnica"
+    }
+
+    event E034 {
+        name: "Visualizar Folha com detalhes da Área Técnica"
+        description: "O objetivo deste evento é exibir ao Gerente da GEPOF um retrato dos editais que foram incluídos em folha."
+        action: "Fluxo Normal
+        O sistema exibe o nome da Área Técnica, tipo e mês da folha. 
+        O sistema exibe, para cada mês, uma tabela listando os editais da área técnica que possuam bolsas a pagar, com as seguintes informações:
+            Edital: nome do edital
+            Status: status de liberação do edital para a competência em questão: somente Liberados e Incluídos em Folha.
+            Bolsas Vigentes: quantidade total de bolsas da competência listada (pagamentos das alocações dos projetos do edital cujo mês de competência é igual ao mês listado).
+            Pendentes: quantidade total de alocações de bolsistas pendentes (status Pendente de Avaliação ou Em Avaliação) dos projetos do edital.
+            Bolsas a Pagar: quantidade total de bolsas da competência listada a serem pagas na Folha sendo gerada (pagamentos das alocações dos projetos do edital cujo mês de competência é igual ao mês listado e status Alocado).
+            Valor Total: somatório dos valores das Bolsas a Pagar do edital na competência listada.
+        O sistema exibe, como totalização da área técnica, o somatório dos valores totais de todos os editais exibidos de todos os meses da área.
+        O sistema exibe, como totalização da folha, o somatório dos valores de cada área técnica.
+"
+    }
+
+    event E035 {
+        name: "Decidir sobre Autorização da Folha"
+        description: "O objetivo deste evento é permitir que o Diretor Administrativo autorize ou rejeite o pagamento de uma Folha Gerada."
+        action: "Fluxo Normal
+            O Diretor Administrativo visualiza uma folha de pagamento com status Gerada, usando o evento Visualizar Folha.
+            O Diretor Administrativo analisa as informações da folha e opta por autorizar ou rejeitar o pagamento da Folha.
+                Autorizar o pagamento da Folha implica em: 
+                    Registro da Decisão de autorização da folha, com usuário, horário e tipo de ação Autorizar.
+                    Atualização do status da folha para “Autorizada”.
+                Rejeitar o pagamento da Folha implica em : (ações similares ao item 5 do evento E027.Cancelar Folha)
+                    Registro da Decisão de rejeição da folha, com usuário, horário e tipo de ação Rejeitar.
+                    Atualização do status da Folha para “Rejeitada”.
+                    Alteração, de “Incluído em Folha” para “Liberado”, dos status dos Editais por Competência envolvidos nesta folha que não estejam envolvidos em nenhuma outra folha (ou seja, que não tenham pagamentos incluídos em outra folha).
+                    Exclusão das associações de todos os pagamentos com a folha rejeitada e alteração de seus status para “Alocado” .
+            O sistema notifica a GEPOF e realiza o evento Visualizar Folha onde visualiza as informações da folha autorizada/rejeitada."
+    }
+}
+
