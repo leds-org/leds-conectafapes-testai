@@ -2,7 +2,7 @@ from crewai import Agent, Task, Crew, Process, LLM
 from crewai_tools import FileWriterTool
 from dotenv import load_dotenv
 from typing import Callable, AnyStr
-from crews.utils import(
+from .utils import(
     init_task,
     init_agent, 
     init_llm,
@@ -65,7 +65,6 @@ def manager_crew(reviews: list[str]) -> Crew:
     manager: Agent = init_agent(
         crew_agents["manager_gherkin"],
         llm=llm_low_temp,
-        tools=[FileWriterTool()],
     )
     final_task: Task = init_task(
         crew_tasks["manager_gherkin_task"],
@@ -81,12 +80,11 @@ def manager_crew(reviews: list[str]) -> Crew:
         verbose=True
     )
 
-async def generate_gherkin(user_case: UserCaseDict) -> None:
-    user_case = user_case["user_case"]
+async def generate_gherkin(user_case: str) -> None:
     crew_gherkin: Crew = crew_generation_gherkin(user_case)
     result1 = crew_gherkin.kickoff_async()
     result2 = crew_gherkin.kickoff_async()
     result3 = crew_gherkin.kickoff_async()
 
     results = await asyncio.gather(result1, result2, result3)
-    return manager_crew(results).kickoff()
+    return manager_crew(results).kickoff().raw

@@ -5,159 +5,117 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using Xunit.Gherkin.Quick;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace ConectaFapes.Test.Steps
 {
-    [FeatureFile("../../../Features/ListModalitiesFeature.feature")]
+    [FeatureFile("../../../Features/modalidadebolsaFeature.feature")]
     [Collection(WebApplicationFactoryParameters.CollectionName)]
-    public class ListModalitiesSteps : Xunit.Gherkin.Quick.Feature
+    public class ModalidadeBolsaStep : Xunit.Gherkin.Quick.Feature
     {
-        private const string BASE_URL = "/api/modalidadebolsa";
+        private const string BASE_URL = "https://localhost:3000/api/modalidadebolsa/";
         private readonly WebApplicationFactory _factory;
         private readonly HttpClient _client;
         private HttpResponseMessage? _response;
-        private List<ModalidadeBolsaResponseDTO> _modalities;
+        private ApiDataProvider _provider;
 
-
-        public ListModalitiesSteps(WebApplicationFactory factory)
+        public ModalidadeBolsaStep(WebApplicationFactory factory)
         {
             _factory = factory;
             _client = _factory.CreateClient();
-            _modalities = new List<ModalidadeBolsaResponseDTO>();
+            _provider = new ApiDataProvider(_client);
         }
 
-        [Given("the system is ready to list modalities")]
-        public void GivenTheSystemIsReadyToListModalities() { }
-
-
-        [Given("the system is ready to list modalities and contains 1000 modalities")]
-        public void GivenTheSystemIsReadyToListModalitiesAndContains1000Modalities() { }
-
-
-        [When("the user requests the list of modalities")]
-        public async Task WhenTheUserRequestsTheListOfModalities()
+        #region Check if API is running
+        [Given("I have access to the ModalidadeBolsa API")]
+        public async Task IHaveAccessAPI()
         {
-            _response = await _client.GetAsync(BASE_URL);
-            _modalities = await DeserializeResponse<List<ModalidadeBolsaResponseDTO>>(_response);
+            var response = await _client.GetAsync(BASE_URL);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
+        #endregion
 
-        [When("the user requests the list of modalities with filter \"(.*)\"")]
-        public async Task WhenTheUserRequestsTheListOfModalitiesWithFilter(string filterText)
+        #region Retrieve Request
+        [When(@"I send a GET request to /modalidadebolsa/""(.+)""")]
+        public async Task WhenISendAGetRequest(string modalidadeBolsaId)
         {
-            string url = BASE_URL + (string.IsNullOrEmpty(filterText) ? "" : $"?filter={filterText}");
-            _response = await _client.GetAsync(url);
-            _modalities = await DeserializeResponse<List<ModalidadeBolsaResponseDTO>>(_response);
-
+            _response = await _client.GetAsync(BASE_URL + modalidadeBolsaId);
         }
+        #endregion
 
-        [Then("the system returns a list of modalities")]
-        public void ThenTheSystemReturnsAListOfModalities()
+        #region Post Request
+        [When(@"I send a POST request to /modalidadebolsa with the following ModalidadeBolsa details: ""(.+)"", ""(.+)""")]
+        public async Task WhenISendAPostRequest(string sigla, string nome)
         {
-            Assert.NotNull(_modalities);
-        }
-
-        [Then("each modality includes sigla, active_resolution_number, active_version_name, and has_editing_version")]
-        public void ThenEachModalityIncludesSiglaActiveResolutionNumberActiveVersionNameAndHasEditingVersion()
-        {
-            foreach (var modality in _modalities)
+            var modalidadeBolsa = new ModalidadeBolsaRequestDTO
             {
-                Assert.NotEmpty(modality.Sigla);
-                Assert.NotNull(modality.ActiveResolutionNumber);
-                Assert.NotEmpty(modality.ActiveVersionName);
-                Assert.NotNull(modality.HasEditingVersion);
-            }
-        }
+                Sigla = StringValidator.CheckEmptyString(sigla),
+                Nome = StringValidator.CheckEmptyString(nome)
+            };
 
-        [Then("the system returns a filtered list of modalities")]
-        public void ThenTheSystemReturnsAFilteredListOfModalities()
-        {
-            Assert.NotEmpty(_modalities);
+            var content = new StringContent(JsonSerializer.Serialize(modalidadeBolsa), Encoding.UTF8, "application/json");
+            _response = await _client.PostAsync(BASE_URL, content);
         }
+        #endregion
 
-        [Then("each modality in the list matches the filter \"(.*)\"")]
-        public void ThenEachModalityInTheListMatchesTheFilter(string filterText)
+        #region Put Request
+        [When(@"I send a PUT request to /modalidadebolsa/""(.+)"" with the following ModalidadeBolsa details: ""(.+)"", ""(.+)""")]
+        public async Task WhenISendAPutRequest(string modalidadeBolsaId, string sigla, string nome)
         {
-            foreach (var modality in _modalities)
+            ModalidadeBolsaResponseDTO modalidadeBolsa = await _provider.GetEntityById<ModalidadeBolsaResponseDTO>("ModalidadeBolsa", modalidadeBolsaId);
+
+            if (modalidadeBolsa != null)
             {
-                Assert.True(modality.Sigla.Contains(filterText, StringComparison.OrdinalIgnoreCase) ||
-                            modality.ActiveResolutionNumber.ToString().Contains(filterText, StringComparison.OrdinalIgnoreCase) ||
-                            modality.ActiveVersionName.Contains(filterText, StringComparison.OrdinalIgnoreCase));
+                modalidadeBolsa.Sigla = StringValidator.CheckEmptyString(sigla);
+                modalidadeBolsa.Nome = StringValidator.CheckEmptyString(nome);
 
-            }
-        }
-
-        [When("the user selects modality with sigla \"(.*)\"")]
-        public async Task WhenTheUserSelectsModalityWithSigla(string sigla)
-        {
-            //This scenario requires a different endpoint or method to select a modality.  This is a placeholder.
-            Assert.True(true); // Placeholder - Replace with actual implementation
-        }
-
-        [Then("the system selects the modality with sigla \"(.*)\"")]
-        public void ThenTheSystemSelectsTheModalityWithSigla(string sigla)
-        {
-            Assert.True(_modalities.Any(m => m.Sigla == sigla));
-        }
-
-        [Then("the system returns an empty list")]
-        public void ThenTheSystemReturnsAnEmptyList()
-        {
-            Assert.Empty(_modalities);
-        }
-
-        [Then("the system logs an informational message \"(.*)\"")]
-        public void ThenTheSystemLogsAnInformationalMessage(string message)
-        {
-            Assert.True(true); // Placeholder - Replace with actual log check
-        }
-
-        [Then("the system handles null values in modality attributes gracefully")]
-        public void ThenTheSystemHandlesNullValuesInModalityAttributesGracefully()
-        {
-            Assert.True(true); // Placeholder -  Replace with actual null value handling check
-
-        }
-
-        [Then("the system returns a list of 1000 modalities")]
-        public void ThenTheSystemReturnsAListOf1000Modalities()
-        {
-            Assert.Equal(1000, _modalities.Count);
-        }
-
-        [Then("the response time is within acceptable limits")]
-        public void ThenTheResponseTimeIsWithinAcceptableLimits()
-        {
-            Assert.True(true); // Placeholder - Replace with actual response time check
-        }
-
-        [Then("the system returns an error message \"(.*)\"")]
-        public void ThenTheSystemReturnsAnErrorMessage(string message)
-        {
-            Assert.Contains(message, _response?.ReasonPhrase ?? "");
-        }
-
-
-        [Then("the system returns an error message containing \"(.*)\"")]
-        public void ThenTheSystemReturnsAnErrorMessageContaining(string errorMessage)
-        {
-            Assert.Contains(errorMessage, _response?.ReasonPhrase ?? "");
-        }
-
-        private async Task<T> DeserializeResponse<T>(HttpResponseMessage response)
-        {
-            if (response != null && response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<T>(content);
+                var content = new StringContent(JsonSerializer.Serialize(modalidadeBolsa), Encoding.UTF8, "application/json");
+                _response = await _client.PutAsync(BASE_URL + modalidadeBolsaId, content);
             }
             else
             {
-                return default(T);
+                _response = new HttpResponseMessage(HttpStatusCode.NotFound);
             }
         }
+        #endregion
+
+        #region Delete Request
+        [When(@"I send a DELETE request to /modalidadebolsa/""(.+)""")]
+        public async Task WhenISendADeleteRequest(string modalidadeBolsaId)
+        {
+            _response = await _client.DeleteAsync(BASE_URL + modalidadeBolsaId);
+        }
+        #endregion
+
+        #region Active Request
+        [When(@"I send a PUT request to /modalidadebolsa/""(.+)""/ativar")]
+        public async Task WhenISendAPutActiveRequest(string modalidadeBolsaId)
+        {
+            _response = await _client.PutAsync(BASE_URL + modalidadeBolsaId + "/ativar", null);
+        }
+        #endregion
+
+        #region Disable Request
+        [When(@"I send a PUT request to /modalidadebolsa/""(.+)""/desativar")]
+        public async Task WhenISendAPutDisableRequest(string modalidadeBolsaId)
+        {
+            _response = await _client.PutAsync(BASE_URL + modalidadeBolsaId + "/desativar", null);
+        }
+        #endregion
+
+        #region Check API Response
+        [Then(@"the API response should be: ""(.+)""")]
+        public void ThenApiResponse(string statusCodeString)
+        {
+            if (int.TryParse(statusCodeString, out int statusCode))
+            {
+                Assert.NotNull(_response);
+                Assert.Equal(statusCode, (int)_response.StatusCode);
+            }
+            else
+            {
+                Assert.True(false, $"Invalid StatusCode: {statusCodeString}");
+            }
+        }
+        #endregion
     }
 }

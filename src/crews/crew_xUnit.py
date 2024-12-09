@@ -1,7 +1,7 @@
 from crewai import Process, LLM, Task, Agent, Crew
 from crewai_tools import FileReadTool, DirectoryReadTool
 from typing import Dict, List
-from utils import (
+from .utils import (
     init_task,
     init_agent,
     init_llm, 
@@ -162,7 +162,7 @@ def crew_xunit_generation(feature: str, api_url: str, dto_code: str) -> Crew:
         verbose=True
         )
 
-def manager_crew(reviews: tuple[str]) -> None:
+def manager_crew(reviews: tuple[str]) -> Crew:
 
     crew_agents: dict[str, str] = agents_config["xunit_crew"]
     crew_tasks : dict[str, str] = tasks_config["xunit_tasks"]
@@ -185,15 +185,13 @@ def manager_crew(reviews: tuple[str]) -> None:
     )
     #
 
-    crew = Crew(
+    return Crew(
         agents=[manager],
         tasks=[manager_task],
         process=Process.sequential
     )
 
-    return crew.kickoff()
-
-async def xunit_generation(feature: FeatureDict):
+async def xunit_generation(feature: str) -> str:
     dto_code, api_url = info_gatherer_crew(feature)
     crew_xunit: Crew = crew_xunit_generation(feature, api_url, dto_code)
     result1 = crew_xunit.kickoff_async()
@@ -201,4 +199,4 @@ async def xunit_generation(feature: FeatureDict):
     result3 = crew_xunit.kickoff_async()
 
     results = await asyncio.gather(result1, result2, result3)
-    return manager_crew(results)
+    return manager_crew(results).kickoff().raw

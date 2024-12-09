@@ -5,9 +5,8 @@ from crewai import Agent, Task, Crew, Process, LLM
 import os
 from dotenv import load_dotenv
 from fastapi.responses import JSONResponse
-from crews.utils import run_crew_async
-from crews.crew_xUnit import xunit_generation
-from crews.crew_gherkin import generate_gherkin
+from src.crews.crew_xUnit import xunit_generation
+from src.crews.crew_gherkin import generate_gherkin
 
 import uuid
 
@@ -33,95 +32,8 @@ load_dotenv()
 class Evento(BaseModel):
     evento: str
 
-# Define LLM models for low and high temperature
-llm_low_temp = LLM(
-    model='gemini/gemini-1.5-flash',
-    temperature=0.0,
-    api_key=os.getenv("GOOGLE_API_KEY"),
-)
-
-llm_high_temp = LLM(
-    model='gemini/gemini-1.5-flash',
-    temperature=0.8,
-    api_key=os.getenv("GOOGLE_API_KEY"),
-)
-
-# Define agents and tasks as in your provided code
-def generate_gherkin_feature(json_payload):
-    tasks = []
-    agents = []
-    for i in range(1, 6, 2):
-        gherkin_writer_agent = Agent(
-            role=f"Escritor de cenários Gherkin {i}",
-            goal="Criar cenários Gherkin compreensivos, claros e concisos para descrever o comportomaneto do sistema",
-            backstory="""Esse agente tem conhecimento extensivo em behavioral-driven development e possui um entendimento profundo
-                         em histórias de usuários e requisitos de sistemas. Se esforça em garantir que os cenários Gherkin descrevam
-                         precisamente comportamentos do sistema esperados.""",
-            llm=llm_high_temp,
-            verbose=True
-        )
-
-        gherkin_reviewer_agent = Agent(
-            role=f"Revisor de cenários Gherkin {i}",
-            goal="Revisar cenários Gherkin para garantir clareza, consistência and alinhamento com as requisições do projeto",
-            backstory="O agente é altamente qualificado em metodologias BDD, com um profundo entendimento de como cenários Gherkin bem escritos contribuem para uma comunicação eficaz entre as partes interessadas.",
-            llm=llm_high_temp,
-            verbose=True
-        )
-
-        agents.append(gherkin_writer_agent)
-        agents.append(gherkin_reviewer_agent)
-
-        task_gherkin_code = Task(
-            description=f"""
-            Transforme o seguinte caso de uso em arquivos BDD com cenários outlines para casos de sucesso e erro.
-            Para cada atributo gerar uma mensagem de erro personalizada quando ela não for informada:
-            {json_payload}
-            """,
-            expected_output="ONLY the gherkin code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG",
-            agent=gherkin_writer_agent,
-        )
-
-        task_gherkin_review = Task(
-            description="Revise o código gherkin gerado e ajuste conforme necessário.",
-            expected_output="ONLY the gherkin code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG",
-            context=[task_gherkin_code],
-            agent=gherkin_reviewer_agent
-        )
-
-        tasks.append(task_gherkin_code)
-        tasks.append(task_gherkin_review)
-
-    manager = Agent(
-        role="Gerente e revisor de códigos Gherkin",
-        goal="Responsável por gerar a versão final dos cenários gherkin contendo os pontos positivos de todos os outros exemplos",
-        backstory="Você, no papel de um especialista em código Gherkin deve revisar os cenários gerados e produzir uma versão final sem erros e com melhores pontos de cada um",
-        llm=llm_low_temp
-    )
-
-    file_name = f"features/analise_evento_{uuid.uuid4()}.feature"
-
-    final_task = Task(
-        description="Leia e compare todos os códigos Gherkin gerados e desenvolva uma versão final com base neles",
-        expected_output="ONLY the gherkin code generated without the code block like ```, DO NOT USE ANY MARKDOWN TAG",
-        output_file=file_name,
-        agent=manager,
-        context=tasks
-    )
-
-    crew = Crew(
-        agents=agents + [manager],
-        tasks=tasks + [final_task],
-        max_rpm=10,
-        output_log_file="crew_log.txt",
-        manager_llm=llm_low_temp,
-        process=Process.sequential,
-        verbose=True
-    )
-
-    resultado = crew.kickoff()
-    return resultado.raw
-
+class Feature(BaseModel):
+    feature: str
 
 @app.get("/")
 async def home():
@@ -143,15 +55,19 @@ async def home():
     }
 )
 async def generate_gherkin_file(evento: Evento):
-    feature = run_crew_async(generate_gherkin, user_case=evento.evento)
+    feature = await generate_gherkin(evento.evento)
     body = {
         "feature": feature
     }
     return JSONResponse(body)
 
-@app.post('xunit')
-async def generate_xunit(params):
-    ...
+@app.post('/xunit')
+async def generate_xunit(feature: Feature):
+    xunit = await xunit_generation(feature.feature)
+    body = {
+        "xunit": xunit
+    }
+    return JSONResponse(body)
 
 if __name__ == "__main__":
     import uvicorn
