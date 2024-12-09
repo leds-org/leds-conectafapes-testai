@@ -1,9 +1,15 @@
 from crewai import Process, LLM, Task, Agent, Crew
 from crewai_tools import FileReadTool, DirectoryReadTool
 from typing import Dict, List
-from module import init_task, init_agent, init_llm, get_yaml_config
+from utils import (
+    init_task,
+    init_agent,
+    init_llm, 
+    get_yaml_config,
+    FeatureDict,
+    run_crew_async
+)
 import asyncio
-import time
 
 llm_low_temp: LLM = init_llm()
 
@@ -187,8 +193,7 @@ def manager_crew(reviews: tuple[str]) -> None:
 
     return crew.kickoff()
 
-
-async def xunit_generation(feature):
+async def xunit_generation(feature: FeatureDict):
     dto_code, api_url = info_gatherer_crew(feature)
     crew_xunit: Crew = crew_xunit_generation(feature, api_url, dto_code)
     result1 = crew_xunit.kickoff_async()
@@ -197,10 +202,3 @@ async def xunit_generation(feature):
 
     results = await asyncio.gather(result1, result2, result3)
     return manager_crew(results)
-
-
-with open("features/ModalidadeBolsaFeature.feature") as file:
-    feature = file.read()
-    dto_code = "dto class"
-    api_url = "api url"
-    asyncio.run(xunit_generation(feature))

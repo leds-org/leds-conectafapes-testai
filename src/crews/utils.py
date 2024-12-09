@@ -1,13 +1,20 @@
 from crewai import LLM, Agent, Task
 import os
-from pydantic import BaseModel
-from typing import List, Dict, Tuple, Union
+from typing import Dict, Union, TypedDict, Callable, Any
 from dotenv import load_dotenv
 from yaml import safe_load
+import asyncio
 
 load_dotenv()
 
-agents: Dict[str, Agent] = {}
+class UserCaseDict(TypedDict):
+    user_case: str
+
+class FeatureDict(TypedDict):
+    feature: str
+
+def run_crew_async(func: Callable, **params: Any) -> str:
+    return asyncio.run(func(params))
 
 def init_llm(config = {}, temp = 0.0, api_key = os.getenv("GOOGLE_API_KEY"), model = os.getenv("DEFAULT_LLM_MODEL")) -> LLM:
     return LLM(
@@ -22,14 +29,6 @@ def init_llm(config = {}, temp = 0.0, api_key = os.getenv("GOOGLE_API_KEY"), mod
         response_format=config.get("response_format", None),
         seed=config.get("seed", None)
     )
-
-# def init_llm(model: str = os.getenv("DEFAULT_LLM_MODEL"), temp: float = 0.0, key: str = os.getenv("GOOGLE_API_KEY")) -> LLM:    
-    
-#     return LLM(
-#         model=model,
-#         temperature=temp,
-#         api_key=key,
-#     )
 
 def init_agent(config: dict[str, str], llm , tools=[]) -> Union[Agent, None]:
     if "role" not in config: 
@@ -65,6 +64,40 @@ def init_agent(config: dict[str, str], llm , tools=[]) -> Union[Agent, None]:
         respect_context_window = config.get("respect_context_window", True),
         code_execution_mode = config.get("code_execution_mode", 'safe'),
     )
+
+def init_task(config: Dict[str, str], agent: Agent = None, context=None, tools=[], output_file="") -> Union[Task, None]:
+    if "description" not in config:
+        print("Task description must be defined")
+        return
+    if "expected_output" not in config:
+        print("Task expected_output must be defined")
+        return
+
+    return Task(
+        description=config.get("description"),
+        expected_output=config.get("expected_output"),
+        agent=agent,
+        tools=tools,
+        async_execution = config.get("async_execution", False),
+        context=context,
+        config = None,
+        output_json = config.get("output_json", None),
+        output_pydantic = config.get("output_pydantic", None),
+        output_file = output_file,
+        human_input = config.get("human_input", False),
+        converter_cls = config.get("converter_cls", None),
+        callback = config.get("callback", None)
+    )
+
+def read_yaml(file_path: str) -> Dict[str, str]:
+    with open(file_path) as file:
+        return safe_load(file)
+
+def get_yaml_config(base_path: str, files=["agents", "tasks"]) -> Dict[str, Dict[str, str]]:
+    dict_return: Dict[str, Dict] = {}
+    for file in files:
+        dict_return[file] = read_yaml(f"{base_path}/{file}.yaml")
+    return dict_return
 
 # def init_agent(
 #     agent_profile: AgentProfile,
@@ -113,29 +146,13 @@ def init_agent(config: dict[str, str], llm , tools=[]) -> Union[Agent, None]:
 #         code_execution_mode = code_execution_mode
 #     )
 
-def init_task(config: Dict[str, str], agent: Agent = None, context=None, tools=[], output_file="") -> Union[Task, None]:
-    if "description" not in config:
-        print("Task description must be defined")
-        return
-    if "expected_output" not in config:
-        print("Task expected_output must be defined")
-        return
-
-    return Task(
-        description=config.get("description"),
-        expected_output=config.get("expected_output"),
-        agent=agent,
-        tools=tools,
-        async_execution = config.get("async_execution", False),
-        context=context,
-        config = None,
-        output_json = config.get("output_json", None),
-        output_pydantic = config.get("output_pydantic", None),
-        output_file = output_file,
-        human_input = config.get("human_input", False),
-        converter_cls = config.get("converter_cls", None),
-        callback = config.get("callback", None)
-    )
+# def init_llm(model: str = os.getenv("DEFAULT_LLM_MODEL"), temp: float = 0.0, key: str = os.getenv("GOOGLE_API_KEY")) -> LLM:    
+    
+#     return LLM(
+#         model=model,
+#         temperature=temp,
+#         api_key=key,
+#     )
 
 # def init_task(
 #     task_profile,
@@ -171,16 +188,6 @@ def init_task(config: Dict[str, str], agent: Agent = None, context=None, tools=[
 # def bind_output_example(*tasks) -> None:
 #     print(tasks)
     #task["description"] = task["description"] + task["output_example"]
-
-def read_yaml(file_path: str) -> Dict[str, str]:
-    with open(file_path) as file:
-        return safe_load(file)
-
-def get_yaml_config(base_path: str, files=["agents", "tasks"]) -> Dict[str, Dict[str, str]]:
-    dict_return: Dict[str, Dict] = {}
-    for file in files:
-        dict_return[file] = read_yaml(f"{base_path}/{file}.yaml")
-    return dict_return
 
 # def init_crew(agents, tasks):
 #     print(agents, tasks)

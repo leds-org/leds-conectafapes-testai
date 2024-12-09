@@ -4,7 +4,10 @@ from pydantic import BaseModel
 from crewai import Agent, Task, Crew, Process, LLM
 import os
 from dotenv import load_dotenv
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import JSONResponse
+from crews.utils import run_crew_async
+from crews.crew_xUnit import xunit_generation
+from crews.crew_gherkin import generate_gherkin
 
 import uuid
 
@@ -140,11 +143,15 @@ async def home():
     }
 )
 async def generate_gherkin_file(evento: Evento):
-    feature = generate_gherkin_feature(evento.evento)
+    feature = run_crew_async(generate_gherkin, user_case=evento.evento)
     body = {
         "feature": feature
     }
     return JSONResponse(body)
+
+@app.post('xunit')
+async def generate_xunit(params):
+    ...
 
 if __name__ == "__main__":
     import uvicorn

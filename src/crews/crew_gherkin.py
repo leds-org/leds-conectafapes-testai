@@ -1,8 +1,14 @@
 from crewai import Agent, Task, Crew, Process, LLM
 from crewai_tools import FileWriterTool
 from dotenv import load_dotenv
-from typing import Dict
-from module import init_task, init_agent, init_llm, get_yaml_config
+from typing import Callable, AnyStr
+from crews.utils import(
+    init_task,
+    init_agent, 
+    init_llm,
+    get_yaml_config, 
+    UserCaseDict
+)
 import asyncio
 
 load_dotenv()
@@ -50,7 +56,6 @@ def crew_generation_gherkin(user_case: str) -> Crew:
         
     )
     
-
 def manager_crew(reviews: list[str]) -> Crew:
     crew_agents: dict[str, str] = agents_config["gherkin_crew"]
     crew_tasks: dict[str, str] = tasks_config["gherkin_tasks"]
@@ -76,8 +81,8 @@ def manager_crew(reviews: list[str]) -> Crew:
         verbose=True
     )
 
-
-async def generate_gherkin(user_case: str) -> None:
+async def generate_gherkin(user_case: UserCaseDict) -> None:
+    user_case = user_case["user_case"]
     crew_gherkin: Crew = crew_generation_gherkin(user_case)
     result1 = crew_gherkin.kickoff_async()
     result2 = crew_gherkin.kickoff_async()
@@ -85,13 +90,3 @@ async def generate_gherkin(user_case: str) -> None:
 
     results = await asyncio.gather(result1, result2, result3)
     return manager_crew(results).kickoff()
-
-user_case: str = """
-E01. Listar Modalidade
-1. O Sistema exibe as modalidades de bolsa, informando: sigla, número da resolução da
-versão ativa, nome da versão ativa e um indicativo se há uma versão em edição.
-2. O Servidor Fapes pode refinar a busca das modalidades por filtro de texto.
-3. O Servidor Fapes pode selecionar uma das modalidades para realizar os demais
-eventos do UC.
-"""
-asyncio.run(generate_gherkin(user_case))
