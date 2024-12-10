@@ -6,17 +6,18 @@ from .utils import (
     init_agent,
     init_llm, 
     get_yaml_config,
-    FeatureDict,
-    run_crew_async
 )
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 llm_low_temp: LLM = init_llm()
 
-yaml_config = get_yaml_config(base_path="src/config", files=["agents", "tasks", "output_examples"])
-agents_config = yaml_config["agents"]
-tasks_config = yaml_config["tasks"]
-outputs_examples = yaml_config["output_examples"]
+def get_configs():
+    yaml_config = get_yaml_config(base_path="src/config", files=["agents", "tasks", "output_examples"])
+    agents_config = yaml_config["agents"]
+    tasks_config = yaml_config["tasks"]
+    outputs_examples = yaml_config["output_examples"]
+    return agents_config, tasks_config, outputs_examples
 
 def crew_xunit_debate(feature: str, strings: Dict[str, str]) -> str:
     
@@ -68,6 +69,7 @@ def crew_xunit_debate(feature: str, strings: Dict[str, str]) -> str:
     return crew.kickoff().raw
 
 def info_gatherer_crew(feature: str) -> tuple[str, str]:
+    agents_config, tasks_config, output_examples = get_configs()
 
     crew_agents: dict[str, str] = agents_config["info_gatherer_crew"]
     crew_tasks: dict[str, str] = tasks_config["info_gatherer_tasks"]
@@ -112,6 +114,7 @@ def info_gatherer_crew(feature: str) -> tuple[str, str]:
 
 def crew_xunit_generation(feature: str, api_url: str, dto_code: str) -> Crew:
     gemini_llm: LLM = init_llm(temp=0.2)
+    agents_config, tasks_config, outputs_examples = get_configs()
     
     crew_agents: dict[str, str] = agents_config["xunit_crew"]
     crew_tasks: dict[str, str] = tasks_config["xunit_tasks"]
@@ -163,6 +166,7 @@ def crew_xunit_generation(feature: str, api_url: str, dto_code: str) -> Crew:
         )
 
 def manager_crew(reviews: tuple[str]) -> Crew:
+    agents_config, tasks_config, outputs_examples = get_configs()
 
     crew_agents: dict[str, str] = agents_config["xunit_crew"]
     crew_tasks : dict[str, str] = tasks_config["xunit_tasks"]
@@ -191,12 +195,10 @@ def manager_crew(reviews: tuple[str]) -> Crew:
         process=Process.sequential
     )
 
-async def xunit_generation(feature: str) -> str:
+def xunit_generation(feature: str) -> str:
     dto_code, api_url = info_gatherer_crew(feature)
     crew_xunit: Crew = crew_xunit_generation(feature, api_url, dto_code)
-    result1 = crew_xunit.kickoff_async()
-    result2 = crew_xunit.kickoff_async()
-    result3 = crew_xunit.kickoff_async()
-
-    results = await asyncio.gather(result1, result2, result3)
+    with ThreadPoolExecutor() as executor:
+        runs = [executor.submit(crew_xunit.kickoff) for _ in range]
+        results = [run.result() for run in runs]
     return manager_crew(results).kickoff().raw

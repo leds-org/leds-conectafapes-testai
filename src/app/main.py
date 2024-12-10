@@ -55,7 +55,7 @@ async def home():
     }
 )
 async def generate_gherkin_file(evento: Evento):
-    feature = await generate_gherkin(evento.evento)
+    feature = generate_gherkin(evento.evento)
     body = {
         "feature": feature
     }
@@ -63,11 +63,16 @@ async def generate_gherkin_file(evento: Evento):
 
 @app.post('/xunit')
 async def generate_xunit(feature: Feature):
-    xunit = await xunit_generation(feature.feature)
-    body = {
-        "xunit": xunit
-    }
-    return JSONResponse(body)
+    try:
+        xunit = xunit_generation(feature.feature)
+        body = {
+            "xunit": xunit
+        }
+        return JSONResponse(body)
+    except Exception as e:
+        return JSONResponse({
+            "erro": e
+        })
 
 if __name__ == "__main__":
     import uvicorn

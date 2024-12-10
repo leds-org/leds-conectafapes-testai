@@ -10,18 +10,23 @@ from .utils import(
     UserCaseDict
 )
 import asyncio
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 load_dotenv()
 
-yaml_config = get_yaml_config(base_path="src/config", files=["agents", "tasks", "output_examples"])
-agents_config = yaml_config["agents"]
-tasks_config = yaml_config["tasks"]
-outputs_examples = yaml_config["output_examples"]
+def get_configs():
+    yaml_config = get_yaml_config(base_path="src/config", files=["agents", "tasks", "output_examples"])
+    agents_config = yaml_config["agents"]
+    tasks_config = yaml_config["tasks"]
+    outputs_examples = yaml_config["output_examples"]
+    return agents_config, tasks_config, outputs_examples
 
 llm_low_temp: LLM = init_llm()
 llm_high_temp: LLM = init_llm(temp=0.6)
 
 def crew_generation_gherkin(user_case: str) -> Crew:
+
+    agents_config, tasks_config, outputs_examples = get_configs()
 
     crew_agents: dict[str, str] = agents_config["gherkin_crew"]
     crew_tasks: dict[str, str] = tasks_config["gherkin_tasks"]
@@ -53,10 +58,11 @@ def crew_generation_gherkin(user_case: str) -> Crew:
         manager_llm=llm_low_temp,
         process=Process.sequential,
         verbose=True
-        
     )
     
 def manager_crew(reviews: list[str]) -> Crew:
+    agents_config, tasks_config, output_examples = get_configs()
+
     crew_agents: dict[str, str] = agents_config["gherkin_crew"]
     crew_tasks: dict[str, str] = tasks_config["gherkin_tasks"]
 
@@ -75,16 +81,14 @@ def manager_crew(reviews: list[str]) -> Crew:
     return Crew(
         agents=[manager],
         tasks=[final_task],
-        max_rpm=10,
+        max_rpm=2,
         process=Process.sequential,
         verbose=True
     )
 
-async def generate_gherkin(user_case: str) -> None:
+def generate_gherkin(user_case: str) -> None:
     crew_gherkin: Crew = crew_generation_gherkin(user_case)
-    result1 = crew_gherkin.kickoff_async()
-    result2 = crew_gherkin.kickoff_async()
-    result3 = crew_gherkin.kickoff_async()
-
-    results = await asyncio.gather(result1, result2, result3)
+    with ThreadPoolExecutor() as executor:
+        runs = [executor.submit(crew_gherkin.kickoff) for _ in range(3)]
+        results = [run.result() for run in runs]
     return manager_crew(results).kickoff().raw
