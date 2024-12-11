@@ -32,8 +32,10 @@ load_dotenv()
 class Evento(BaseModel):
     evento: str
 
-class Feature(BaseModel):
+class XunitPayload(BaseModel):
     feature: str
+    api_url: str
+    dto_code: str
 
 @app.get("/")
 async def home():
@@ -62,9 +64,9 @@ async def generate_gherkin_file(evento: Evento):
     return JSONResponse(body)
 
 @app.post('/xunit')
-async def generate_xunit(feature: Feature):
+async def generate_xunit(payload: XunitPayload):
     try:
-        xunit = xunit_generation(feature.feature)
+        xunit = xunit_generation(payload.feature)
         body = {
             "xunit": xunit
         }

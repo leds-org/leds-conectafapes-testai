@@ -195,10 +195,11 @@ def manager_crew(reviews: tuple[str]) -> Crew:
         process=Process.sequential
     )
 
-def xunit_generation(feature: str) -> str:
-    dto_code, api_url = info_gatherer_crew(feature)
+def xunit_generation(feature: str, api_url: str = None, dto_code: str = None) -> str:
+    if api_url is None and dto_code is None:
+        dto_code, api_url = info_gatherer_crew(feature)
     crew_xunit: Crew = crew_xunit_generation(feature, api_url, dto_code)
     with ThreadPoolExecutor() as executor:
-        runs = [executor.submit(crew_xunit.kickoff) for _ in range]
+        runs = [executor.submit(crew_xunit.kickoff) for _ in range(3)]
         results = [run.result() for run in runs]
     return manager_crew(results).kickoff().raw
