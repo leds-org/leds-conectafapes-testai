@@ -1,13 +1,10 @@
 from crewai import Agent, Task, Crew, Process, LLM
-from crewai_tools import FileWriterTool
 from dotenv import load_dotenv
-from typing import Callable, AnyStr
-from .utils import(
+from utils import(
     init_task,
     init_agent, 
     init_llm,
-    get_yaml_config, 
-    UserCaseDict
+    get_yaml_config
 )
 import asyncio
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor

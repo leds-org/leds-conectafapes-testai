@@ -1,15 +1,13 @@
 from crewai import Process, LLM, Task, Agent, Crew
 from crewai_tools import FileReadTool, DirectoryReadTool
 from typing import Dict, List
-from .utils import (
+from utils import (
     init_task,
     init_agent,
     init_llm, 
     get_yaml_config,
 )
-import asyncio
 from concurrent.futures import ThreadPoolExecutor
-
 llm_low_temp: LLM = init_llm()
 
 def get_configs():
@@ -157,10 +155,7 @@ def crew_xunit_generation(feature: str, api_url: str, dto_code: str) -> Crew:
     return Crew(
         agents=[xunit_writer, xunit_reviewer],
         tasks=[xunit_write, xunit_review],
-        max_rpm=10,
         output_log_file="crew_log.txt",
-        #manager_agent=manager_agent,
-        manager_llm=llm_low_temp,
         process=Process.sequential,
         verbose=True
         )

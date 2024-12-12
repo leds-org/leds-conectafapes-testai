@@ -1,15 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from crewai import Agent, Task, Crew, Process, LLM
-import os
 from dotenv import load_dotenv
 from fastapi.responses import JSONResponse
-from src.crews.crew_xUnit import xunit_generation
-from src.crews.crew_gherkin import generate_gherkin
-
-import uuid
-
+from crew_xUnit import xunit_generation
+from crew_gherkin import generate_gherkin
 app = FastAPI()
 
 origins = [
@@ -41,10 +36,6 @@ class XunitPayload(BaseModel):
 async def home():
     return "Rodando"
 
-#@app.get("/test")
-#async def teste():
-#    return FileResponse(path="C:/Users/gabri/test_generation_ai/features/analise_evento_3b552e54-4343-4952-9db1-fd412d869e9e.feature", media_type='text/plain', filename="analiase.feature")
-
 @app.post("/gherkin",
     responses={
         200: {
@@ -71,10 +62,8 @@ async def generate_xunit(payload: XunitPayload):
             "xunit": xunit
         }
         return JSONResponse(body)
-    except Exception as e:
-        return JSONResponse({
-            "erro": e
-        })
+    except Exception:
+        return HTTPException()
 
 if __name__ == "__main__":
     import uvicorn
