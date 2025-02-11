@@ -1,61 +1,95 @@
-import tiktoken
 from crewai import Agent, Task, Crew, LLM
 import os
+import difflib
 from dotenv import load_dotenv
+import ast
 from pathlib import Path
-
-def estimate_tokens(text):
-    encoder = tiktoken.encoding_for_model("gpt-4")
-    return len(encoder.encode(text))
-
-total_tokens_processed = 0
+import Agents
+import Tasks
 
 load_dotenv()
 
+def find_file(base_directory: str, file_name: str) -> str:
+    """
+    Recursivamente procura por um arquivo no diretório fornecido e seus subdiretórios.
+    Se não for encontrado um correspondência exata, retorna a correspondência mais próxima usando correspondência difusa.
+    """
+    found_files = []
+    for root, _, files in os.walk(base_directory):
+        if file_name in files:
+            return os.path.join(root, file_name)  
+        found_files.extend([os.path.join(root, file) for file in files])
+
+    file_names = [os.path.basename(path) for path in found_files]
+    closest_match = difflib.get_close_matches(file_name, file_names, n=1)
+    if closest_match:
+        for path in found_files:
+            if os.path.basename(path) == closest_match[0]:
+                return path 
+    return None  
+
 language_model = LLM(
-    model='gemini/gemini-1.5-pro',
+    model='gemini/gemini-1.5-flash',
     temperature=0.0,
     api_key=os.getenv("GOOGLE_API_KEY"),
 )
 
-test_generator_agent = Agent(
-    name="Gerador de Testes xUnit",
-    role="Engenheiro Sênior de Testes em C# e Especialista em xUnit",
-    backstory="Profissional experiente com ampla vivência na criação de suítes de testes unitários usando xUnit para C#.",
-    goal="Gerar uma suíte de testes unitários detalhada e abrangente em C# usando xUnit, garantindo alta cobertura de código e cenários.",
-    llm=language_model
+dependency_finder_agent = Agent(**Agents.dict_dependency_finder_agent, llm=language_model)
+
+test_generator_agent = Agent(**Agents.dict_test_generator_agent, llm=language_model)
+
+file_path = Path("leds-conectafapes-backend-admin-main\src\ConectaFapes\ConectaFapes.Application\Services\CadastroModalidadesBolsas\VersaoModalidadeService.cs")
+base_directory = "leds-conectafapes-backend-admin-main/src/ConectaFapes"
+
+with open(file_path, 'r', encoding='utf-8') as file:
+    cs_file_content = file.read()
+
+analyze_code_task = Task(**Tasks.dict_analyze_code_task, agent=dependency_finder_agent)
+
+crew_dependency = Crew(
+    agents=[dependency_finder_agent],
+    tasks=[analyze_code_task],
+    verbose=True,
 )
 
-cs_directory = Path("leds-conectafapes-backend-admin-main/src/ConectaFapes/ConectaFapes.Application/Services/CadastroModalidadesBolsas")
-existing_tests_directory = Path("leds-conectafapes-backend-admin-main/src/ConectaFapes/ConectaFapes.Application.Test/Services")
-output_directory = existing_tests_directory / "Testes-Gerados"
+dependency_results = crew_dependency.kickoff()
+dependency_results = list(ast.literal_eval(dependency_results.raw))
 
-if not cs_directory.exists():
-    raise FileNotFoundError(f"O diretório '{cs_directory}' não foi encontrado.")
-if not existing_tests_directory.exists():
-    raise FileNotFoundError(f"O diretório '{existing_tests_directory}' não foi encontrado.")
+existing_file = file_path.stem
+existing_test = f"{existing_file}Test.cs"
+dependency_results.append(existing_test)
+print(dependency_results)
 
-output_directory.mkdir(exist_ok=True)
+found_paths = [find_file(base_directory, filename) for filename in dependency_results]
+found_paths = [path for path in found_paths if path is not None]
 
-for cs_file in cs_directory.glob("*.cs"):
-    with open(cs_file, 'r', encoding='utf-8') as file:
-        cs_file_content = file.read()
-        total_tokens_processed += estimate_tokens(cs_file_content)
+print("Arquivos Encontrados:", found_paths)
 
-    existing_test_file = existing_tests_directory / f"{cs_file.stem}Test.cs"
-    existing_test_content = ""
-    if existing_test_file.exists():
-        with open(existing_test_file, 'r', encoding='utf-8') as file:
-            existing_test_content = file.read()
-            total_tokens_processed += estimate_tokens(existing_test_content)
+with open(file_path, "r", encoding="utf-8") as f:
+    cs_file_content = f.read()
 
-    generate_test_task = Task(
+# Determina se há um teste existente (se o último item da lista estiver no diretório de testes)
+existing_test_content = ""
+if found_paths and "Test" in found_paths[-1]:
+    test_file_path = found_paths.pop()  # Remove o teste da lista e armazena o caminho
+    with open(test_file_path, "r", encoding="utf-8") as f:
+        existing_test_content = f.read()
+
+# Obtém o conteúdo dos arquivos relacionados
+related_files_content = []
+for related_file in found_paths:
+    with open(related_file, "r", encoding="utf-8") as f:
+        related_files_content.append(f.read())
+related_files_content = "\n\n".join(related_files_content)
+
+generate_test_task = Task(
     description=(
         f"Com base no seguinte código C#, crie uma suíte de testes unitários abrangente usando xUnit:\n\n"
         f"{cs_file_content}\n\n"
+        "### O código também utiliza as seguintes classes auxiliares:\n"
+        f"{related_files_content}\n\n"
         "### Certifique-se de que os testes gerados sigam a mesma estrutura e estilo dos exemplos funcionais fornecidos, como o código abaixo:\n"
-        f"{existing_test_content}\n\n"
-        "- Use esse exemplo como referência para garantir que os testes gerados sejam consistentes, funcionais e alinhados com as práticas já estabelecidas.\n"
+        f"{existing_test_content if existing_test_content else 'Não há testes existentes para referência.'}\n\n"
         "### Requisitos para os testes:\n"
         "1. Verifique a acessibilidade dos métodos antes de criar os testes.\n"
         "2. Use o framework xUnit para todos os testes.\n"
@@ -186,28 +220,20 @@ for cs_file in cs_directory.glob("*.cs"):
         "    ```\n"
     ),
     expected_output=(
-        "Um arquivo C# contendo uma suíte de testes xUnit abrangente, bem organizada e funcional, com pelo menos 25 testes que cobrem todos os métodos públicos e cenários relevantes. "
+        "Um arquivo C# contendo uma suíte de testes xUnit abrangente, bem organizada e funcional, com pelo menos 30 testes que cobrem todos os métodos públicos e cenários relevantes. "
         "Se houver métodos privados, os testes devem incluir abordagens adequadas para validá-los sem modificar a classe original. "
         "O código gerado deve ser testável, executável e baseado apenas em métodos e propriedades reais da classe em questão. "
         "Todas as instâncias de classes devem ser criadas utilizando o namespace completo `Entities.CadastroModalidadesBolsas.`. "
         "Os testes devem seguir a mesma estrutura e estilo dos exemplos funcionais fornecidos, utilizando mocks configurados de forma consistente e retornos diretos (não assíncronos)."
     ),
-    agent=test_generator_agent
-    )
+    agent=test_generator_agent,
+)
 
-    total_tokens_processed += estimate_tokens(generate_test_task.description)
+crew_test_generation = Crew(
+    agents=[test_generator_agent],
+    tasks=[generate_test_task],
+    verbose=True,
+)
 
-    test_crew = Crew(
-        agents=[test_generator_agent],
-        tasks=[generate_test_task],
-        verbose=True
-    )
-
-    test_results = test_crew.kickoff()
-    total_tokens_processed += estimate_tokens(str(test_results))
-
-    test_output_file = output_directory / f"{cs_file.stem}Tests.cs"
-    with open(test_output_file, 'w', encoding='utf-8') as file:
-        file.write(str(test_results))
-
-print(f"Total de tokens estimados: {total_tokens_processed}")
+test_results = crew_test_generation.kickoff()
+print("Testes Gerados:", test_results)
